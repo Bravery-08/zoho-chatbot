@@ -1,0 +1,26 @@
+services:
+
+  backend:
+    build: ./backend
+    container_name: rag-backend
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend/chroma_store:/app/chroma_store   # persist vectors
+      - ./backend/data:/app/data                   # mount SOP file
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+
+  bot:
+    build: ./bot
+    container_name: whatsapp-bot
+    depends_on:
+      - backend
+    volumes:
+      - ./bot/auth_info:/app/auth_info             # persist WA session
+    env_file:
+      - ./bot/.env
+    environment:
+      - FASTAPI_URL=http://backend:8000            # Docker internal network
+    restart: unless-stopped

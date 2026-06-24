@@ -1,0 +1,10 @@
+# backend/zoho_mcp/requirements-zoho.txt
+# Phase 0 only needs these on top of your existing backend deps.
+# The MCP SDK requires Python >= 3.10.
+#
+# Either add `mcp>=1.10,<2` to backend/requirements.txt, or — if the resolver
+# fights with your pinned llama-index / chromadb / numpy<2 stack — install this
+# module in its own venv, since it is fully isolated from app/.
+mcp>=1.10,<2
+groq>=0.9.0
+python-dotenv>=1.0.1

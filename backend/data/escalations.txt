@@ -1,0 +1,40 @@
+
+---
+Date: 2026-06-07T10:48:51.660721
+Q: What is the MOQ for silk yarn
+A: 500 pieces
+
+---
+Date: 2026-06-07T10:58:04.153894
+Q: What is MOQ for pencil
+A: 600 sticks
+
+---
+Date: 2026-06-07T11:01:32.235090
+Q: How do you fire employees
+A: We fire employees based on their performance 123 only.
+
+---
+Date: 2026-06-07T11:09:34.670637
+Q: How many employees you have
+A: 100 employees
+
+---
+Date: 2026-06-07T11:12:25.866686
+Q: How many people have you fired
+A: 00000
+
+---
+Date: 2026-06-08T03:58:13.559876
+Q: Who is the founder of your company
+A: Paplu Rathi is the founder
+
+---
+Date: 2026-06-09T07:31:39.831150
+Q: What is the price of the pencils?
+A: $5 per stick
+
+---
+Date: 2026-06-18T03:44:45.796581
+Q: What role do you play at BrightServe?
+A: I am responsible for answering queries related to our company

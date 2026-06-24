@@ -1,0 +1,131 @@
+# ================================================================
+# WhatsApp RAG Bot — .gitignore
+# ================================================================
+
+# ----------------------------------------------------------------
+# PYTHON — Backend
+# ----------------------------------------------------------------
+
+# Virtual environment
+backend/venv/
+backend/.venv/
+backend/env/
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Env files
+backend/.env
+.env
+
+# Pytest / testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# mypy
+.mypy_cache/
+
+# ----------------------------------------------------------------
+# CHROMADB — Vector Store (generated, not source code)
+# ----------------------------------------------------------------
+backend/chroma_store/
+
+# ----------------------------------------------------------------
+# ML MODELS — HuggingFace cache (large files, auto-downloaded)
+# ----------------------------------------------------------------
+backend/models/
+~/.cache/huggingface/
+*.bin
+*.safetensors
+*.ot
+*.onnx
+*.pt
+*.pth
+
+# ----------------------------------------------------------------
+# NODE.JS — Bot
+# ----------------------------------------------------------------
+
+# Dependencies
+bot/node_modules/
+
+# Env files
+bot/.env
+
+# WhatsApp session files (sensitive — auth tokens)
+bot/auth_info/
+bot/auth_info_baileys/
+bot/session/
+
+# Logs
+bot/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ----------------------------------------------------------------
+# DATA — Optional: comment out if you WANT to track your SOP file
+# ----------------------------------------------------------------
+# backend/data/
+
+# ----------------------------------------------------------------
+# OS FILES
+# ----------------------------------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ----------------------------------------------------------------
+# EDITORS & IDEs
+# ----------------------------------------------------------------
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+
+# JetBrains (PyCharm, WebStorm)
+.idea/
+*.iml
+
+# Vim
+*.swp
+*.swo
+
+# ----------------------------------------------------------------
+# NGROK
+# ----------------------------------------------------------------
+ngrok.yml
+.ngrok/
+
+# ----------------------------------------------------------------
+# MISC
+# ----------------------------------------------------------------
+
+# Test output files
+backend/test_output/
+*.tmp

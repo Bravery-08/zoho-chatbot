@@ -1,0 +1,18 @@
+# Development overrides — merged automatically by `docker compose up`
+# Do NOT commit secrets or production values here.
+
+services:
+
+  backend:
+    volumes:
+      - ./backend/app:/app/app          # live-reload Python source
+    command: >
+      sh -c "
+        [ -f /app/chroma_store/chroma.sqlite3 ] || python ingest.py &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  bot:
+    volumes:
+      - ./bot/src:/app/src              # live-reload JS source
+    command: npm run dev

@@ -1,0 +1,73 @@
+// corpus.jsonl — 40-command Phase 0 eval corpus
+// Tool names verified against smoke_test list output (11 tools, ZohoAnalytics_createReport removed)
+// expected_args left as {} — tools nest everything under path_variables / query_params objects;
+// add specific nested checks after inspecting real call responses with smoke_test call.
+//
+// Distribution: 10 CRM · 10 Books · 10 Inventory · 10 Negatives
+// Negatives: 3 no-tool-available · 4 out-of-scope · 3 conversational
+//
+// ── CRM ──────────────────────────────────────────────────────────────────────
+// searchRecords: natural-language queries that need module + filter resolution
+{"id": "C001", "command": "List all leads that came in this week.", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {}, "category": "crm_search"}
+{"id": "C002", "command": "Show all contacts at Sunrise Agro Exports.", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {}, "category": "crm_search"}
+{"id": "C003", "command": "Which deals are currently in the Negotiation stage?", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {}, "category": "crm_search"}
+{"id": "C004", "command": "Find all leads from UAE.", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {}, "category": "crm_search"}
+{"id": "C005", "command": "Show open deals with value above 10 lakh.", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {}, "category": "crm_search"}
+{"id": "C006", "command": "Find the contact details for Rajesh Kumar.", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {}, "category": "crm_search"}
+{"id": "C007", "command": "Which deals are closing this month?", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {}, "category": "crm_search"}
+{"id": "C008", "command": "Search for accounts in the food import sector.", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {}, "category": "crm_search"}
+// getRecord: commands that reference a specific record ID
+{"id": "C009", "command": "Get the CRM record for lead ID 4892736000001234056.", "expected_tool": "ZohoCRM_getRecord", "expected_args": {}, "category": "crm_get"}
+{"id": "C010", "command": "Pull up deal record 4892736000005678012.", "expected_tool": "ZohoCRM_getRecord", "expected_args": {}, "category": "crm_get"}
+//
+// ── Books ─────────────────────────────────────────────────────────────────────
+// list_invoices
+{"id": "C011", "command": "Show me all unpaid invoices.", "expected_tool": "ZohoBooks_list_invoices", "expected_args": {}, "category": "books_invoices"}
+{"id": "C012", "command": "List all overdue invoices.", "expected_tool": "ZohoBooks_list_invoices", "expected_args": {}, "category": "books_invoices"}
+{"id": "C013", "command": "Show invoices sent to Al Seer Trading this month.", "expected_tool": "ZohoBooks_list_invoices", "expected_args": {}, "category": "books_invoices"}
+{"id": "C014", "command": "Get the last invoice we raised for Global Spice Traders.", "expected_tool": "ZohoBooks_list_invoices", "expected_args": {}, "category": "books_invoices"}
+// list_estimates
+{"id": "C015", "command": "List all estimates sent this month.", "expected_tool": "ZohoBooks_list_estimates", "expected_args": {}, "category": "books_estimates"}
+{"id": "C016", "command": "Show me draft estimates that are still pending.", "expected_tool": "ZohoBooks_list_estimates", "expected_args": {}, "category": "books_estimates"}
+// list_sales_orders
+{"id": "C017", "command": "Show all open sales orders.", "expected_tool": "ZohoBooks_list_sales_orders", "expected_args": {}, "category": "books_sales_orders"}
+{"id": "C018", "command": "List sales orders created this week.", "expected_tool": "ZohoBooks_list_sales_orders", "expected_args": {}, "category": "books_sales_orders"}
+// get_customer_balances_report
+{"id": "C019", "command": "Show me the receivables balance report — what do our customers owe us overall?", "expected_tool": "ZohoBooks_get_customer_balances_report", "expected_args": {}, "category": "books_balances"}
+{"id": "C020", "command": "Show me the full customer balances report for receivables.", "expected_tool": "ZohoBooks_get_customer_balances_report", "expected_args": {}, "category": "books_balances"}
+//
+// ── Inventory ─────────────────────────────────────────────────────────────────
+// get_item: stock / product lookups
+{"id": "C021", "command": "How many units of basmati rice 25kg bags are in stock?", "expected_tool": "ZohoInventory_get_item", "expected_args": {}, "category": "inventory_item"}
+{"id": "C022", "command": "Get the details for inventory item SKU-442.", "expected_tool": "ZohoInventory_get_item", "expected_args": {}, "category": "inventory_item"}
+{"id": "C023", "command": "What is the current stock level for turmeric powder 1kg?", "expected_tool": "ZohoInventory_get_item", "expected_args": {}, "category": "inventory_item"}
+// get_sales_order: specific SO lookups by number
+{"id": "C024", "command": "What is the status of inventory sales order SO-00142?", "expected_tool": "ZohoInventory_get_sales_order", "expected_args": {}, "category": "inventory_so"}
+{"id": "C025", "command": "Show me the details for SO-00201.", "expected_tool": "ZohoInventory_get_sales_order", "expected_args": {}, "category": "inventory_so"}
+{"id": "C026", "command": "Get sales order SO-00189.", "expected_tool": "ZohoInventory_get_sales_order", "expected_args": {}, "category": "inventory_so"}
+// list_purchase_orders
+{"id": "C027", "command": "Are there any purchase orders to our suppliers still pending approval?", "expected_tool": "ZohoInventory_list_purchase_orders", "expected_args": {}, "category": "inventory_po"}
+{"id": "C028", "command": "List all open POs we have raised with vendors.", "expected_tool": "ZohoInventory_list_purchase_orders", "expected_args": {}, "category": "inventory_po"}
+// get_shipment_order: shipment tracking
+{"id": "C029", "command": "What is the shipment status for order SO-00138?", "expected_tool": ["ZohoInventory_get_shipment_order", "ZohoInventory_get_sales_order"], "expected_args": {}, "category": "inventory_shipment"}
+{"id": "C030", "command": "Get the shipment details for SO-00175.", "expected_tool": ["ZohoInventory_get_shipment_order", "ZohoInventory_get_sales_order"], "expected_args": {}, "category": "inventory_shipment"}
+//
+// ── Negatives: no tool available ──────────────────────────────────────────────
+// These are legitimately business-related but no read tool exists for them yet.
+// The model should NOT call ZohoAnalytics_createReport — that is a write tool.
+{"id": "C031", "command": "Who are our top 5 customers by revenue this quarter?", "expected_tool": null, "expected_args": {}, "category": "negative_no_tool"}
+{"id": "C032", "command": "Which countries do most of our export competitors sell to?", "expected_tool": null, "expected_args": {}, "category": "negative_no_tool"}
+{"id": "C033", "command": "Create an invoice for Nile Trading for $5000.", "expected_tool": null, "expected_args": {}, "category": "negative_no_tool"}
+//
+// ── Negatives: out of scope ───────────────────────────────────────────────────
+// Entirely unrelated to the business data layer. Model must call no tool.
+{"id": "C034", "command": "Will it rain in Delhi tomorrow?", "expected_tool": null, "expected_args": {}, "category": "negative_scope"}
+{"id": "C035", "command": "What is the current USD to INR exchange rate?", "expected_tool": null, "expected_args": {}, "category": "negative_scope"}
+{"id": "C036", "command": "Explain the difference between CIF and FOB pricing.", "expected_tool": null, "expected_args": {}, "category": "negative_scope"}
+{"id": "C037", "command": "What is the capital of Saudi Arabia?", "expected_tool": null, "expected_args": {}, "category": "negative_scope"}
+//
+// ── Negatives: conversational / no action ────────────────────────────────────
+// Greetings, acks, conversation enders. No tool should fire.
+{"id": "C038", "command": "Hi there.", "expected_tool": null, "expected_args": {}, "category": "negative_convo"}
+{"id": "C039", "command": "Thanks, that is all for now.", "expected_tool": null, "expected_args": {}, "category": "negative_convo"}
+{"id": "C040", "command": "Okay, got it.", "expected_tool": null, "expected_args": {}, "category": "negative_convo"}

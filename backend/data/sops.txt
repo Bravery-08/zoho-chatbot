@@ -1,0 +1,337 @@
+================================================================
+COMPANY STANDARD OPERATING PROCEDURES (SOPs)
+Organization: BrightServe Solutions
+Version: 2.1 | Last Updated: January 2025
+================================================================
+
+----------------------------------------------------------------
+SOP-001: CUSTOMER COMPLAINT HANDLING
+----------------------------------------------------------------
+
+PURPOSE:
+To ensure all customer complaints are handled promptly, professionally,
+and consistently across all support channels.
+
+SCOPE:
+Applies to all customer-facing staff including support agents,
+account managers, and team leads.
+
+PROCEDURE:
+
+Step 1 — Acknowledge the Complaint
+- Respond to the customer within 2 hours of receiving the complaint.
+- Use the customer's name and acknowledge their frustration.
+- Do not argue, interrupt, or become defensive.
+- Example opening: "Thank you for bringing this to our attention,
+  [Name]. I understand how frustrating this must be."
+
+Step 2 — Log the Complaint
+- Open a new ticket in the CRM system (Freshdesk).
+- Set the Priority field: Low / Medium / High / Critical.
+  - Critical: Service outage, data loss, legal threat.
+  - High: Payment issue, repeated failure, VIP customer.
+  - Medium: Feature not working, delay in service.
+  - Low: General inquiry or minor inconvenience.
+- Tag the ticket with the appropriate category:
+  Billing / Technical / Delivery / Conduct / Other.
+
+Step 3 — Investigate
+- Gather all relevant information: order ID, account number,
+  screenshots, timestamps.
+- Check internal systems for error logs or transaction history.
+- Do not promise a resolution timeline you cannot commit to.
+- Escalate to Tier 2 support if unresolved within 24 hours.
+
+Step 4 — Resolve and Respond
+- Communicate the resolution clearly and in plain language.
+- Offer compensation if applicable (see SOP-007: Refund Policy).
+- Confirm the customer is satisfied before closing the ticket.
+
+Step 5 — Close and Document
+- Mark ticket as Resolved only after customer confirmation.
+- Add internal notes summarizing the root cause and fix.
+- If the complaint reveals a systemic issue, flag it to the
+  Operations Manager for review.
+
+ESCALATION PATH:
+Agent → Team Lead → Operations Manager → Director of Customer Success
+
+KPI TARGETS:
+- First Response Time: < 2 hours
+- Resolution Time (Low/Medium): < 48 hours
+- Resolution Time (High/Critical): < 8 hours
+- Customer Satisfaction Score (CSAT): > 85%
+
+----------------------------------------------------------------
+SOP-002: EMPLOYEE ONBOARDING PROCESS
+----------------------------------------------------------------
+
+PURPOSE:
+To provide a structured and welcoming experience for new employees
+that enables them to become productive within their first 30 days.
+
+SCOPE:
+HR Department, Department Managers, and IT Team.
+
+PRE-JOINING (1 week before start date):
+
+- HR sends the offer letter, NDA, and policy documents for signing.
+- IT creates company email account and grants system access.
+- Manager prepares a 30-day onboarding plan.
+- Assign a buddy from the same team to the new employee.
+- Send a welcome email with the first-day schedule and office address.
+
+DAY 1:
+
+Morning (9:00 AM – 12:00 PM):
+- Welcome meeting with HR: office tour, culture overview, policies.
+- Collect signed documents: NDA, code of conduct, bank details form.
+- Issue company laptop, access badge, and equipment checklist.
+- Set up workstation with the IT team.
+
+Afternoon (1:00 PM – 5:00 PM):
+- Introduction meeting with the direct manager.
+- Team introduction call or in-person meet.
+- Walkthrough of tools: Slack, Jira, Google Workspace, Freshdesk.
+- Review of the 30-day onboarding plan.
+
+WEEK 1:
+- Shadow at least 2 experienced team members.
+- Complete mandatory training modules (listed in the LMS system).
+- Attend team standup meetings daily.
+- End of week check-in with HR and direct manager.
+
+DAYS 8–30:
+- Begin handling assigned tasks with buddy support.
+- Weekly 1-on-1 with manager to track progress.
+- Complete role-specific training certifications.
+- Day 30 review meeting: assess performance, address concerns,
+  set 60-day goals.
+
+DOCUMENTS REQUIRED:
+- Signed offer letter
+- Government-issued ID (passport or Aadhaar)
+- PAN Card copy
+- Bank account details
+- Educational certificates (originals for verification)
+- 2 passport-size photographs
+
+RESPONSIBLE PARTIES:
+- HR Manager: paperwork, system accounts, onboarding schedule.
+- IT Team: laptop setup, software installation, email creation.
+- Direct Manager: role training, 30-day plan, mentorship.
+- Buddy: day-to-day support, culture guidance.
+
+----------------------------------------------------------------
+SOP-003: REFUND AND CANCELLATION POLICY
+----------------------------------------------------------------
+
+PURPOSE:
+To define clear and fair guidelines for processing customer
+refunds and cancellations.
+
+SCOPE:
+Billing team, support agents, and account managers.
+
+ELIGIBILITY FOR REFUND:
+
+Full Refund (100%):
+- Service not delivered within the committed timeframe.
+- Duplicate payment made by the customer.
+- Technical error on the company's side causing service failure.
+- Cancellation requested within 24 hours of purchase (cooling-off period).
+
+Partial Refund (50%):
+- Cancellation requested between 24 hours and 7 days of purchase.
+- Service partially delivered but incomplete due to company error.
+
+No Refund:
+- Cancellation requested after 7 days of purchase.
+- Service fully delivered and confirmed by the customer.
+- Violation of terms of service by the customer.
+- Custom or bespoke projects once work has commenced.
+
+REFUND PROCESS:
+
+Step 1: Customer submits a refund request via support ticket or email.
+Step 2: Agent verifies eligibility using the criteria above.
+Step 3: If eligible, agent raises a refund request in the billing portal.
+Step 4: Billing team approves and processes within 3–5 business days.
+Step 5: Customer is notified via email with the transaction reference.
+Step 6: Refund reflects in the original payment method within
+        7–10 business days depending on the bank.
+
+ESCALATION:
+- Disputed refund decisions go to the Billing Manager.
+- Refunds above ₹50,000 require Operations Director approval.
+
+COMPENSATION GUIDELINES:
+- Delay in service > 48 hours: 10% credit on next invoice.
+- Delay in service > 1 week: 25% credit or partial refund option.
+- Repeated failures (3+ incidents): escalate to account review.
+
+----------------------------------------------------------------
+SOP-004: INCIDENT AND OUTAGE MANAGEMENT
+----------------------------------------------------------------
+
+PURPOSE:
+To minimize the impact of technical incidents and ensure rapid,
+coordinated response and communication.
+
+SEVERITY LEVELS:
+
+SEV-1 (Critical):
+- Complete service outage affecting all users.
+- Data breach or security compromise.
+- Response time: Immediate (within 15 minutes).
+
+SEV-2 (High):
+- Major feature unavailable, affecting > 30% of users.
+- Significant performance degradation.
+- Response time: Within 1 hour.
+
+SEV-3 (Medium):
+- Minor feature outage affecting < 30% of users.
+- Workaround available.
+- Response time: Within 4 hours.
+
+SEV-4 (Low):
+- Cosmetic issues, minor bugs, no impact on usability.
+- Response time: Within 24 hours.
+
+INCIDENT RESPONSE STEPS:
+
+Step 1 — Detection and Alerting
+- Incident detected via monitoring tool (Datadog/PagerDuty) or
+  reported by a customer.
+- On-call engineer acknowledges the alert within 15 minutes.
+
+Step 2 — Declare Incident
+- Create an incident channel in Slack: #incident-YYYY-MM-DD-brief-name
+- Assign roles: Incident Commander, Technical Lead, Comms Lead.
+
+Step 3 — Investigate and Mitigate
+- Technical Lead identifies root cause and applies immediate fix
+  or rollback.
+- Incident Commander coordinates efforts and removes blockers.
+
+Step 4 — Customer Communication
+- Comms Lead posts update on the status page within 30 minutes.
+- For SEV-1 and SEV-2: email affected customers every 1 hour.
+- Template: "We are aware of an issue affecting [service]. Our team
+  is actively investigating. Next update in 1 hour."
+
+Step 5 — Resolution
+- Confirm fix is stable for at least 30 minutes before declaring resolved.
+- Update status page to "All Systems Operational."
+- Notify affected customers of resolution and root cause summary.
+
+Step 6 — Post-Incident Review (PIR)
+- Conduct PIR within 48 hours for SEV-1 and SEV-2.
+- Document: timeline, root cause, impact, fix, and preventive actions.
+- Share PIR report with the leadership team.
+
+----------------------------------------------------------------
+SOP-005: LEAVE AND ATTENDANCE POLICY
+----------------------------------------------------------------
+
+PURPOSE:
+To outline the types of leave available to employees and the
+process for applying and approving leave.
+
+LEAVE ENTITLEMENTS (per calendar year):
+
+- Casual Leave (CL):       8 days
+- Sick Leave (SL):         8 days
+- Earned Leave (EL):       15 days (accrued at 1.25 days/month)
+- Public Holidays:         As per the published holiday calendar
+- Maternity Leave:         26 weeks (as per Maternity Benefit Act)
+- Paternity Leave:         5 days
+- Bereavement Leave:       3 days (immediate family only)
+- Marriage Leave:          3 days (once during employment)
+
+RULES:
+
+- Casual Leave cannot be carried forward to the next year.
+- Sick Leave requires a medical certificate for absences > 2 days.
+- Earned Leave can be carried forward up to a maximum of 30 days.
+- Leave cannot be taken without prior approval except in emergencies.
+- A minimum of 2 working days' notice is required for CL and EL.
+
+APPLICATION PROCESS:
+
+Step 1: Employee applies via the HRMS portal (Zoho People).
+Step 2: System notifies the reporting manager via email.
+Step 3: Manager approves or rejects within 1 business day.
+Step 4: Approved leave is reflected in the attendance system.
+Step 5: For emergency leave, inform manager via Slack/call first,
+        then apply through portal on the next working day.
+
+ATTENDANCE:
+- Core working hours: 10:00 AM – 6:00 PM (Monday to Friday).
+- Flexible window: Employees may start between 9:00 AM and 11:00 AM.
+- Late arrival more than 3 times in a month triggers a warning.
+- 3 consecutive absent days without notification = disciplinary action.
+
+WORK FROM HOME (WFH):
+- Up to 2 WFH days per week (with manager approval).
+- WFH not permitted during the first 90 days of employment.
+- Employees must be reachable and attend all scheduled meetings.
+
+----------------------------------------------------------------
+SOP-006: DATA PRIVACY AND SECURITY POLICY
+----------------------------------------------------------------
+
+PURPOSE:
+To protect customer and company data in compliance with applicable
+data protection laws (IT Act 2000 and DPDP Act 2023).
+
+EMPLOYEE RESPONSIBILITIES:
+
+- Never share login credentials with colleagues or third parties.
+- Lock your screen when stepping away from your workstation.
+- Do not store customer data on personal devices or USB drives.
+- Report any suspected data breach immediately to the IT Security team.
+- Use only company-approved tools for communication and file sharing.
+
+PASSWORD POLICY:
+- Minimum 12 characters, including uppercase, lowercase,
+  numbers, and symbols.
+- Passwords must be changed every 90 days.
+- Do not reuse the last 5 passwords.
+- Use the company password manager (1Password) for all credentials.
+
+DATA CLASSIFICATION:
+
+Confidential:
+- Customer PII (name, contact, payment info)
+- Employee personal records
+- Financial statements
+- Strategy documents
+
+Internal:
+- Internal emails and reports
+- Product roadmaps
+- Meeting notes
+
+Public:
+- Marketing content
+- Published case studies
+- Job postings
+
+ACCESS CONTROL:
+- Access to systems is granted on a need-to-know basis.
+- New access requests must be approved by the department head.
+- Access is revoked within 24 hours of an employee's last working day.
+- Quarterly access audits are conducted by the IT team.
+
+INCIDENT REPORTING:
+- Suspected breach → report to it-security@brightserve.com immediately.
+- IT team investigates within 4 hours.
+- If breach is confirmed, affected customers are notified within 72 hours
+  as required by law.
+
+================================================================
+END OF DOCUMENT
+For queries, contact: operations@brightserve.com
+================================================================
