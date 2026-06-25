@@ -20,8 +20,9 @@ from app.general import general_llm_answer
 from app.rewriter import rewrite_query
 from app.config import ESCALATION_HOLDING_MESSAGE, ESCALATION_JID
 import app.translator as translator
-import zoho_mcp.intent as intent_classifier
-import zoho_mcp.agent as zoho_agent
+import zoho_mcp.intent    as intent_classifier
+import zoho_mcp.agent     as zoho_agent
+import zoho_mcp.identity  as identity_resolver
 
 logging.basicConfig(
     level=logging.INFO,
@@ -160,26 +161,47 @@ async def query_endpoint(request: Request, body: QueryRequest):
         # ── Step 3: Rewrite incomplete query using conversation context ───────
         rewritten = rewrite_query(english_message, body.history, english_quoted)
 
-        # ── Step 4: Classify intent ───────────────────────────────────────────
-        # Four-way: answer_from_kb | read_zoho | general | escalate
-        # Uses the fast 8B model — cheap routing call, not an answer.
-        history_dicts = [{"role": h.role, "content": h.content} for h in body.history]
+        # ── Step 4: Resolve sender identity ──────────────────────────────────
+        # Maps the WhatsApp JID → internal | known customer | unknown.
+        # Cached for 1 hour; first message from a new number hits Zoho CRM.
+        identity = await identity_resolver.resolve(body.sender)
+        log.info(f"  [identity] state={identity.state} "
+                 f"account={identity.account_name or '—'} "
+                 f"phone={identity.phone}")
+
+        history_dicts = [{"role": h.role, "content": h.content}
+                         for h in body.history]
+
+        # ── Step 5: Classify intent ───────────────────────────────────────────
         intent = intent_classifier.classify(rewritten, history_dicts)
         log.info(f"  [intent] {intent}")
 
+        # ── Step 6: Route ─────────────────────────────────────────────────────
+
         if intent == "read_zoho":
-            # ── Zoho agent path ───────────────────────────────────────────────
-            # pick tool → inject org_id → call Zoho → ground → synthesize
-            zoho_answer = await zoho_agent.run(rewritten, history_dicts)
-            if zoho_answer:
-                english_response = zoho_answer
-                route            = "zoho"
-                source_chunks    = 0
+            if identity.state == "unknown":
+                # Unknown callers cannot access live business data.
+                # Allow them to keep asking KB / general questions.
+                english_response = (
+                    "I wasn't able to find your number in our system. "
+                    "Please contact us to get set up with account access. "
+                    "I'm happy to help with general questions in the meantime!"
+                )
+                route         = "unknown"
+                source_chunks = 0
             else:
-                # grounding failed or no tool matched → human escalation
-                english_response = ESCALATION_HOLDING_MESSAGE
-                route            = "escalate"
-                source_chunks    = 0
+                # known or internal — agent applies scope internally
+                zoho_answer = await zoho_agent.run(
+                    rewritten, history_dicts, identity
+                )
+                if zoho_answer:
+                    english_response = zoho_answer
+                    route            = "zoho"
+                    source_chunks    = 0
+                else:
+                    english_response = ESCALATION_HOLDING_MESSAGE
+                    route            = "escalate"
+                    source_chunks    = 0
 
         elif intent == "general":
             english_response = general_llm_answer(english_message, body.history)
@@ -187,17 +209,14 @@ async def query_endpoint(request: Request, body: QueryRequest):
             source_chunks    = 0
 
         elif intent == "escalate":
-            # intent classifier directly flagged for human
             english_response = ESCALATION_HOLDING_MESSAGE
             route            = "escalate"
             source_chunks    = 0
 
         else:
-            # answer_from_kb — go through the existing RAG pipeline
-            # ── Step 5: Retrieve chunks ───────────────────────────────────────
-            nodes = rag.retrieve(rewritten)
-
-            # ── Step 6: LLM judge ─────────────────────────────────────────────
+            # answer_from_kb — RAG pipeline (open to all identity states;
+            # KB content is policy/product info, not customer-specific data)
+            nodes     = rag.retrieve(rewritten)
             sufficient = judge.is_sufficient(rewritten, nodes)
             log.info(f"  [judge] sufficient={sufficient}")
 
@@ -206,8 +225,6 @@ async def query_endpoint(request: Request, body: QueryRequest):
                 route            = "rag"
                 source_chunks    = len(nodes)
             else:
-                # KB doesn't have it — escalate (intent said it was company
-                # knowledge, so the human should see it)
                 english_response = ESCALATION_HOLDING_MESSAGE
                 route            = "escalate"
                 source_chunks    = 0

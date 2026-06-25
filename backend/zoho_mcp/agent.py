@@ -1,36 +1,30 @@
 # backend/zoho_mcp/agent.py
 """
-Phase 1 Zoho agent loop.
+Phase 1 / Phase 2 Zoho agent loop.
 
-Flow for each user message
-──────────────────────────
-1. Fetch sanitised tool schemas from the MCP server (cached for TOOL_CACHE_TTL s).
-2. LLM picks the best tool and generates arguments.
-3. Inject the real ZOHO_ORG_ID wherever the model wrote a placeholder.
-4. Call the Zoho MCP tool — get live data.
-5. Grounding check — if Zoho returned an API error, return None → caller escalates.
-6. Synthesize a natural-language answer from the raw Zoho JSON.
+Phase 1 flow (no identity):
+  pick tool → inject org_id → call Zoho → ground → synthesize
 
-Returns
-───────
-str   — synthesized answer to send to the user.
-None  — tool errored or no tool matched; caller should route to escalate.
-        Empty-but-valid results (e.g. no unpaid invoices) are NOT None —
-        the synthesizer says "you have no unpaid invoices."
+Phase 2 additions (with identity):
+  filter tools by identity state → inject org_id → inject customer scope →
+  call Zoho → verify ownership → ground → synthesize
 """
 import json
 import logging
+import re
 import time
 from typing import Optional
 
-from groq import Groq
+from groq import Groq, BadRequestError as GroqBadRequestError
 
 from zoho_mcp.client import ZohoMCPClient, result_to_text, tools_to_groq_schema
 from zoho_mcp.config import GROQ_API_KEY, AGENT_MODEL, ZOHO_ORG_ID, TOOL_CACHE_TTL
+from zoho_mcp.identity import CustomerIdentity
+import zoho_mcp.scope as scope
 
 log = logging.getLogger(__name__)
 
-# ── Tool-selection routing rules (mirrors Phase 0 eval prompt) ───────────────
+# ── Tool-selection routing rules ──────────────────────────────────────────────
 _ROUTING_PROMPT = """
 You are an operations agent for a B2B merchant-export company.
 You have access ONLY to the Zoho business data tools provided — no search
@@ -65,29 +59,32 @@ ROUTING RULES — apply when two tools could both fit:
    or cross-record summaries — no tool supports aggregation.
 
 Do not invent IDs or values not present in the message.
-Use "organization_id" as the literal placeholder for the org ID — it will be
-replaced automatically before the call is made.
+Use "organization_id" as a placeholder for the org ID — it is replaced
+automatically before the call is executed.
+
+CRITICAL — SCHEMA STRUCTURE: Every Zoho tool wraps its parameters under
+query_params and/or path_variables. Never generate flat top-level args.
+CORRECT:   {"query_params": {"organization_id": "organization_id", "filter_by": "Status.Unpaid"}}
+INCORRECT: {"organization_id": "organization_id", "filter_by": "Status.Unpaid"}
 """.strip()
 
 # ── Synthesizer prompt ────────────────────────────────────────────────────────
 _SYNTHESIZER_PROMPT = """
 You are a helpful operations assistant for a B2B merchant-export company.
-You have been given the raw result of a Zoho database lookup.
-
 Answer the user's question clearly and concisely using ONLY the data provided.
 
-Formatting rules:
-- Monetary values: Indian Rupees (₹) with Indian comma formatting (e.g. ₹3,40,000).
+Rules:
+- Monetary values: use ₹ with Indian formatting (₹3,40,000).
 - Dates: DD Mon YYYY (e.g. 12 Jun 2026).
-- If result has multiple records, summarise with key fields — do not dump raw JSON.
-- If result contains no records, say so clearly (e.g. "You have no unpaid invoices.").
-- Do not mention Zoho, MCP, tool names, or internal numeric IDs in your answer.
-- Keep the answer short — 1–5 sentences for most queries.
+- Multiple records: summarise with key fields, do not dump raw JSON.
+- No records found: say so clearly ("You have no unpaid invoices.").
+- Never mention Zoho, MCP, tool names, or internal numeric IDs.
+- Keep the answer to 1–5 sentences for most queries.
 """.strip()
 
-# ── Schema cache (module-level, shared across requests) ───────────────────────
-_tool_cache: list[dict] = []
-_tool_cache_ts: float   = 0.0
+# ── Tool schema cache ─────────────────────────────────────────────────────────
+_tool_cache:    list[dict] = []
+_tool_cache_ts: float      = 0.0
 
 
 async def _get_tools() -> list[dict]:
@@ -103,16 +100,65 @@ async def _get_tools() -> list[dict]:
     return _tool_cache
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── 400 recovery helpers ──────────────────────────────────────────────────────
+
+def _recover_from_400(error: GroqBadRequestError) -> tuple[str | None, dict]:
+    """
+    When Groq rejects a tool call (HTTP 400), extract the intended tool name
+    and args from the failed_generation field in the error body.
+    Same pattern as run_eval.py — reused verbatim for consistency.
+    """
+    try:
+        body       = error.response.json()
+        failed_gen = body.get("error", {}).get("failed_generation", "")
+        match      = re.search(r"<function=([^>]+)>(.*?)</function>",
+                               failed_gen, re.DOTALL)
+        if match:
+            tool_name = match.group(1).strip()
+            try:
+                args = json.loads(match.group(2).strip())
+            except json.JSONDecodeError:
+                args = {}
+            return tool_name, args
+    except Exception:
+        pass
+    return None, {}
+
+
+def _fix_nesting(tool_name: str, args: dict) -> dict:
+    """
+    Auto-correct flat args that should be nested under query_params.
+
+    The model occasionally generates:
+        {"organization_id": "x", "customer_name": "y"}
+    when the schema requires:
+        {"query_params": {"organization_id": "x", "customer_name": "y"}}
+
+    Detection: args have neither "query_params" nor "path_variables" keys,
+    but the cached tool schema declares "query_params" as a required property.
+    In that case, wrap the whole flat dict under query_params.
+    """
+    if "query_params" in args or "path_variables" in args:
+        return args     # already correctly nested
+
+    # Look up the schema from the module-level cache
+    schema = next(
+        (t["function"].get("parameters", {})
+         for t in _tool_cache
+         if t.get("function", {}).get("name") == tool_name),
+        None,
+    )
+    if schema and "query_params" in schema.get("required", []):
+        log.warning("[agent] %s: flat args detected — wrapping in query_params", tool_name)
+        return {"query_params": args}
+
+    return args
+
+
+# ── org_id injection ──────────────────────────────────────────────────────────
 
 def _inject_org_id(args: dict, org_id: str) -> dict:
-    """
-    Replace the literal placeholder "organization_id" with the real org ID
-    at any nesting level in the tool arguments.
-
-    The routing prompt tells the model to use "organization_id" as a placeholder,
-    so this is always a reliable substitution rather than a guess.
-    """
+    """Replace the literal placeholder 'organization_id' with the real org ID."""
     def _walk(obj):
         if isinstance(obj, dict):
             return {
@@ -126,14 +172,12 @@ def _inject_org_id(args: dict, org_id: str) -> dict:
     return _walk(args)
 
 
+# ── Grounding check ───────────────────────────────────────────────────────────
+
 def _is_grounded(result_text: str) -> bool:
     """
-    Return False only for hard error conditions:
-      - Empty / blank result from MCP
-      - Zoho API error (response code != 0)
-
-    Empty-but-valid results (empty arrays) return True — the synthesizer
-    is instructed to tell the user "no records found" in that case.
+    False only on hard error conditions (blank, or Zoho API error code != 0).
+    Empty-but-valid results → True (synthesizer says "no records found").
     """
     if not result_text or not result_text.strip():
         return False
@@ -144,81 +188,107 @@ def _is_grounded(result_text: str) -> bool:
                      data.get("code"), data.get("message", ""))
             return False
     except json.JSONDecodeError:
-        pass  # non-JSON non-empty result → treat as grounded
+        pass   # non-JSON non-empty → treat as grounded
     return True
 
 
 # ── Main entry point ──────────────────────────────────────────────────────────
 
-async def run(message: str, history: list[dict]) -> Optional[str]:
+async def run(
+    message:  str,
+    history:  list[dict],
+    identity: Optional[CustomerIdentity] = None,
+) -> Optional[str]:
     """
     Run the Zoho agent loop for one user message.
 
     Parameters
     ----------
-    message : str
-        The rewritten user message in English.
-    history : list[dict]
-        Conversation history as {"role": ..., "content": ...} dicts.
+    message  : rewritten user message in English.
+    history  : conversation history as {"role", "content"} dicts.
+    identity : resolved CustomerIdentity from identity.resolve().
+               None → treated as internal (Phase 1 backwards-compatibility).
 
     Returns
     -------
-    str   — synthesized answer ready to send to the user.
-    None  — tool errored, no tool matched, or Zoho returned an error.
-            The caller should route to "escalate".
+    str   — synthesized answer to send to the user.
+    None  — tool errored, no tool matched, API error, or ownership check
+            failed. Caller should route to "escalate".
     """
     client = Groq(api_key=GROQ_API_KEY)
 
-    # ── Step 1: fetch tool schemas (cached) ───────────────────────────────────
+    # ── Step 1: fetch + filter tool schemas ───────────────────────────────────
     try:
-        tools = await _get_tools()
+        all_tools = await _get_tools()
     except Exception as exc:
         log.error("[agent] failed to fetch tools: %s", exc)
         return None
 
+    state = identity.state if identity else "internal"
+    tools = scope.filter_tools(all_tools, state)
+
+    if not tools:
+        # unknown identity — no tools available
+        log.info("[agent] no tools available for state=%s", state)
+        return None
+
     # ── Step 2: LLM picks a tool ──────────────────────────────────────────────
-    recent = history[-6:] if len(history) > 6 else history
+    recent   = history[-6:] if len(history) > 6 else history
     messages = [{"role": "system", "content": _ROUTING_PROMPT}]
     messages.extend(recent)
     messages.append({"role": "user", "content": message})
 
+    tool_name: str | None = None
+    tool_args: dict       = {}
+
     try:
-        pick = client.chat.completions.create(
-            model=AGENT_MODEL,
-            messages=messages,
-            tools=tools,
-            tool_choice="auto",
-            temperature=0,
-            max_tokens=512,
+        pick  = client.chat.completions.create(
+            model=AGENT_MODEL, messages=messages,
+            tools=tools, tool_choice="auto",
+            temperature=0, max_tokens=512,
         )
+        calls = pick.choices[0].message.tool_calls or []
+        if not calls:
+            log.info("[agent] no tool selected — message will escalate")
+            return None
+        tool_name = calls[0].function.name
+        try:
+            tool_args = json.loads(calls[0].function.arguments)
+        except (json.JSONDecodeError, TypeError):
+            tool_args = {}
+
+    except GroqBadRequestError as exc:
+        # Groq rejected the call for schema violations (e.g. flat args instead
+        # of nested query_params). Recover the intended tool from failed_generation
+        # and fix the nesting before proceeding — same recovery as run_eval.py.
+        tool_name, tool_args = _recover_from_400(exc)
+        if not tool_name:
+            log.error("[agent] 400 with no recoverable tool: %s", exc)
+            return None
+        log.warning("[agent] recovered from 400 — tool=%s (will fix nesting)", tool_name)
+        tool_args = _fix_nesting(tool_name, tool_args)
+
     except Exception as exc:
         log.error("[agent] tool selection failed: %s", exc)
         return None
 
-    calls = pick.choices[0].message.tool_calls or []
-    if not calls:
-        log.info("[agent] no tool selected — message will escalate")
-        return None
+    log.info("[agent] selected tool=%s", tool_name)
 
-    tool_name = calls[0].function.name
-    try:
-        tool_args = json.loads(calls[0].function.arguments)
-    except (json.JSONDecodeError, TypeError):
-        tool_args = {}
-
-    log.info("[agent] selected tool=%s args=%s", tool_name, str(tool_args)[:160])
-
-    # ── Step 3: inject real org_id ────────────────────────────────────────────
+    # ── Step 3: inject org_id and customer scope ──────────────────────────────
     if ZOHO_ORG_ID:
         tool_args = _inject_org_id(tool_args, ZOHO_ORG_ID)
-        log.info("[agent] args after org_id injection: %s", str(tool_args)[:160])
+
+    account_name = identity.account_name if identity else None
+    tool_args = scope.inject_customer_scope(tool_name, tool_args, account_name)
+
+    log.info("[agent] final args: %s", str(tool_args)[:200])
 
     # ── Step 4: call Zoho ─────────────────────────────────────────────────────
     try:
         async with ZohoMCPClient() as zoho:
             result = await zoho.call_tool(tool_name, tool_args)
         result_text = result_to_text(result)
-        log.info("[agent] tool result (first 300): %s", result_text[:300])
+        log.info("[agent] result (first 300): %s", result_text[:300])
     except Exception as exc:
         log.error("[agent] tool execution failed: %s", exc)
         return None
@@ -228,17 +298,21 @@ async def run(message: str, history: list[dict]) -> Optional[str]:
         log.info("[agent] grounding failed — routing to escalate")
         return None
 
-    # ── Step 6: synthesize ────────────────────────────────────────────────────
+    # ── Step 6: ownership verification (Inventory get tools) ─────────────────
+    if not scope.verify_result_ownership(tool_name, result_text, account_name):
+        log.warning("[agent] ownership check failed for %s — routing to escalate",
+                    tool_name)
+        return None
+
+    # ── Step 7: synthesize ────────────────────────────────────────────────────
     synth_messages = [
         {"role": "system", "content": _SYNTHESIZER_PROMPT},
         {"role": "user",   "content": f"User asked: {message}\n\nZoho data:\n{result_text}"},
     ]
     try:
-        synth = client.chat.completions.create(
-            model=AGENT_MODEL,
-            messages=synth_messages,
-            temperature=0.1,
-            max_tokens=512,
+        synth  = client.chat.completions.create(
+            model=AGENT_MODEL, messages=synth_messages,
+            temperature=0.1, max_tokens=512,
         )
         answer = synth.choices[0].message.content.strip()
         log.info("[agent] answer: %s", answer[:200])
