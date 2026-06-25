@@ -20,6 +20,8 @@ from app.general import general_llm_answer
 from app.rewriter import rewrite_query
 from app.config import ESCALATION_HOLDING_MESSAGE, ESCALATION_JID
 import app.translator as translator
+import zoho_mcp.intent as intent_classifier
+import zoho_mcp.agent as zoho_agent
 
 logging.basicConfig(
     level=logging.INFO,
@@ -158,31 +160,57 @@ async def query_endpoint(request: Request, body: QueryRequest):
         # ── Step 3: Rewrite incomplete query using conversation context ───────
         rewritten = rewrite_query(english_message, body.history, english_quoted)
 
-        # ── Step 4: Retrieve chunks ───────────────────────────────────────────
-        nodes = rag.retrieve(rewritten)
+        # ── Step 4: Classify intent ───────────────────────────────────────────
+        # Four-way: answer_from_kb | read_zoho | general | escalate
+        # Uses the fast 8B model — cheap routing call, not an answer.
+        history_dicts = [{"role": h.role, "content": h.content} for h in body.history]
+        intent = intent_classifier.classify(rewritten, history_dicts)
+        log.info(f"  [intent] {intent}")
 
-        # ── Step 5: LLM judge ─────────────────────────────────────────────────
-        sufficient = judge.is_sufficient(rewritten, nodes)
-        log.info(f"  [judge] sufficient={sufficient}")
+        if intent == "read_zoho":
+            # ── Zoho agent path ───────────────────────────────────────────────
+            # pick tool → inject org_id → call Zoho → ground → synthesize
+            zoho_answer = await zoho_agent.run(rewritten, history_dicts)
+            if zoho_answer:
+                english_response = zoho_answer
+                route            = "zoho"
+                source_chunks    = 0
+            else:
+                # grounding failed or no tool matched → human escalation
+                english_response = ESCALATION_HOLDING_MESSAGE
+                route            = "escalate"
+                source_chunks    = 0
 
-        if sufficient:
-            english_response = rag.synthesize(enriched, nodes)
-            route = "rag"
-            source_chunks = len(nodes)
+        elif intent == "general":
+            english_response = general_llm_answer(english_message, body.history)
+            route            = "general"
+            source_chunks    = 0
+
+        elif intent == "escalate":
+            # intent classifier directly flagged for human
+            english_response = ESCALATION_HOLDING_MESSAGE
+            route            = "escalate"
+            source_chunks    = 0
 
         else:
-            classification = classify_query(rewritten)
-            log.info(f"  [router] classified='{classification}'")
+            # answer_from_kb — go through the existing RAG pipeline
+            # ── Step 5: Retrieve chunks ───────────────────────────────────────
+            nodes = rag.retrieve(rewritten)
 
-            if classification == "company":
-                english_response = ESCALATION_HOLDING_MESSAGE
-                route = "escalate"
-                source_chunks = 0
+            # ── Step 6: LLM judge ─────────────────────────────────────────────
+            sufficient = judge.is_sufficient(rewritten, nodes)
+            log.info(f"  [judge] sufficient={sufficient}")
 
+            if sufficient:
+                english_response = rag.synthesize(enriched, nodes)
+                route            = "rag"
+                source_chunks    = len(nodes)
             else:
-                english_response = general_llm_answer(english_message, body.history)
-                route = "general"
-                source_chunks = 0
+                # KB doesn't have it — escalate (intent said it was company
+                # knowledge, so the human should see it)
+                english_response = ESCALATION_HOLDING_MESSAGE
+                route            = "escalate"
+                source_chunks    = 0
 
         # ── Step 6: Translate response back to user's language ────────────────
         final_response = translator.translate_to_language(english_response, source_language, source_script)
