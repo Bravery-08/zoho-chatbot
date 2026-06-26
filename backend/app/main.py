@@ -24,9 +24,10 @@ import app.translator as translator
 import zoho_mcp.intent    as intent_classifier
 import zoho_mcp.agent     as zoho_agent
 import zoho_mcp.identity  as identity_resolver
-import zoho_mcp.confirm   as confirm
-import zoho_mcp.audit     as audit
+import zoho_mcp.confirm     as confirm
+import zoho_mcp.audit       as audit
 import zoho_mcp.write_agent as write_agent
+import zoho_mcp.workflow    as workflow
 
 logging.basicConfig(
     level=logging.INFO,
@@ -47,6 +48,7 @@ async def lifespan(app: FastAPI):
     log.info("Escalation DB ready ✅")
     confirm.init_db()
     audit.init_db()
+    workflow.init_db()
     log.info("Write action DB ready ✅")
     yield
     log.info("Shutting down.")
@@ -178,9 +180,7 @@ async def query_endpoint(request: Request, body: QueryRequest):
                          for h in body.history]
 
         # ── Step 5: Check for pending write confirmation ──────────────────────
-        # This must happen BEFORE intent classification. If the user sent
-        # "yes" or "no" in response to a pending proposal, handle it here
-        # without calling the classifier.
+        # Pending confirmations take priority over everything else.
         pending = confirm.get_pending(body.sender)
 
         if pending:
@@ -189,15 +189,17 @@ async def query_endpoint(request: Request, body: QueryRequest):
 
             if decision == "cancelled":
                 confirm.update_status(pending.id, "cancelled")
+                wf = workflow.get_active(body.sender)
+                if wf:
+                    workflow.fail(wf.id, "cancelled by customer during confirmation")
                 english_response = "No problem, I've cancelled that request."
                 route            = "cancelled"
                 source_chunks    = 0
 
             elif decision == "confirmed":
                 if pending.risk == "low":
-                    # ── Low-risk: execute immediately ─────────────────────────
                     confirm.update_status(pending.id, "confirmed")
-                    result_text = await write_agent.execute_write(
+                    result_text = await write_agent.execute_with_retry(
                         pending.tool_name, pending.tool_args,
                         books_customer_id=identity.books_customer_id,
                     )
@@ -213,18 +215,39 @@ async def query_endpoint(request: Request, body: QueryRequest):
                             result_summary="executed successfully",
                             zoho_response=result_text,
                         )
-                        english_response = "Done! I've created that for you."
-                        route            = "zoho_write"
+                        # ── Phase 4: start workflow after estimate creation ────
+                        if pending.tool_name == "ZohoBooks_create_estimate":
+                            wf = workflow.start_quote_to_order(
+                                jid=body.sender,
+                                account_name=identity.account_name,
+                                result_text=result_text,
+                                tool_args=pending.tool_args,
+                            )
+                            english_response = (
+                                "Done! Your estimate has been created. "
+                                "When you're ready to place the order, "
+                                "just say *accept* or *place order*."
+                                if wf else "Done! I've created that for you."
+                            )
+                            if wf:
+                                log.info("  [workflow] quote_to_order started id=%s", wf.id)
+                        else:
+                            english_response = "Done! I've created that for you."
+                        route         = "zoho_write"
+                        source_chunks = 0
                     else:
+                        wf = workflow.get_active(body.sender)
+                        if wf:
+                            workflow.fail(wf.id, f"{pending.tool_name} failed after retries")
                         english_response = ESCALATION_HOLDING_MESSAGE
                         route            = "escalate"
-                    source_chunks = 0
+                        source_chunks    = 0
 
                 else:
-                    # ── High-risk: send for human approval ────────────────────
                     confirm.update_status(pending.id, "awaiting_approval")
-                    # Reuse the escalation system so handler.js sends the
-                    # approval request to ESCALATION_JID automatically.
+                    wf = workflow.get_active(body.sender)
+                    if wf and pending.tool_name == "ZohoBooks_create_sales_order":
+                        workflow.advance(wf.id, workflow.SO_PENDING_APPROVAL)
                     approval_msg = (
                         f"⚠️ APPROVAL NEEDED\n\n"
                         f"Customer: {identity.contact_name or 'Unknown'} "
@@ -234,11 +257,7 @@ async def query_endpoint(request: Request, body: QueryRequest):
                         f"  APPROVE {pending.id}\n"
                         f"  REJECT {pending.id}"
                     )
-                    escalate.create_escalation(
-                        body.sender,
-                        approval_msg,
-                        None,
-                    )
+                    escalate.create_escalation(body.sender, approval_msg, None)
                     english_response = (
                         "Got it — I've sent that for approval. "
                         "I'll let you know as soon as it's confirmed."
@@ -247,7 +266,6 @@ async def query_endpoint(request: Request, body: QueryRequest):
                     source_chunks = 0
 
             else:
-                # Ambiguous reply — re-prompt
                 english_response = (
                     f"Just to confirm — {pending.proposal_text}\n\n"
                     "Reply *yes* to proceed or *no* to cancel."
@@ -256,92 +274,157 @@ async def query_endpoint(request: Request, body: QueryRequest):
                 source_chunks = 0
 
         else:
-            # ── Step 6: Classify intent ───────────────────────────────────────
-            intent = intent_classifier.classify(rewritten, history_dicts)
-            log.info(f"  [intent] {intent}")
+            # ── Step 5b: Check for active workflow ────────────────────────────
+            active_wf  = workflow.get_active(body.sender)
+            wf_handled = False
 
-            # ── Step 7: Route ─────────────────────────────────────────────────
+            if active_wf:
+                wf_intent = workflow.classify_in_context(rewritten, active_wf)
+                log.info("  [workflow] id=%s step=%s wf_intent=%s",
+                         active_wf.id, active_wf.current_step, wf_intent)
 
-            if intent == "write_zoho":
-                if identity.state == "unknown":
+                if wf_intent == "accept_quote":
+                    ctx        = active_wf.context
+                    est_num    = ctx.get("estimate_number", "the estimate")
+                    est_id     = ctx.get("estimate_id", "")
+                    line_items = ctx.get("line_items", [])
+                    so_args = {
+                        "body": {
+                            "customer_id": "customer_id",
+                            # estimate_id removed — Zoho requires estimate status="Accepted"
+                            # before conversion. SO is created fresh with the same line items.
+                            "line_items":  line_items,
+                        },
+                        "query_params": {"organization_id": "organization_id"},
+                    }
+                    proposal_text = (
+                        f"I'll convert {est_num} into a confirmed sales order. "
+                        f"This commits the order — shall I proceed?"
+                    )
+                    confirm.create_pending(
+                        jid=body.sender,
+                        account_name=identity.account_name,
+                        risk="high",
+                        tool_name="ZohoBooks_create_sales_order",
+                        tool_args=so_args,
+                        proposal_text=proposal_text,
+                    )
                     english_response = (
-                        "I wasn't able to find your number in our system. "
-                        "Please contact us to get set up with account access."
+                        f"{proposal_text}\n\nReply *yes* to confirm or *no* to cancel."
                     )
-                    route         = "unknown"
+                    route         = "write_proposal"
                     source_chunks = 0
-                else:
-                    proposal = await write_agent.generate_proposal(
-                        rewritten, history_dicts, identity
-                    )
-                    if proposal:
-                        tool_name, proposal_text, tool_args, risk = proposal
-                        confirm.create_pending(
-                            jid=body.sender,
-                            account_name=identity.account_name,
-                            risk=risk,
-                            tool_name=tool_name,
-                            tool_args=tool_args,
-                            proposal_text=proposal_text,
-                        )
+                    wf_handled    = True
+
+                elif wf_intent == "status_check":
+                    step = active_wf.current_step
+                    if step == workflow.ESTIMATE_CREATED:
+                        est_num = active_wf.context.get("estimate_number", "your estimate")
                         english_response = (
-                            f"{proposal_text}\n\nReply *yes* to confirm or *no* to cancel."
+                            f"{est_num} has been created and is ready. "
+                            f"Say *accept* when you'd like to place the order."
                         )
-                        route         = "write_proposal"
+                    elif step == workflow.SO_PENDING_APPROVAL:
+                        english_response = (
+                            "Your sales order is waiting for approval from our team. "
+                            "I'll notify you as soon as it's confirmed."
+                        )
+                    else:
+                        english_response = "Your request is being processed."
+                    route         = "workflow_status"
+                    source_chunks = 0
+                    wf_handled    = True
+
+                elif wf_intent == "cancel_workflow":
+                    workflow.fail(active_wf.id, "cancelled by customer")
+                    english_response = "No problem — I've cancelled that workflow."
+                    route         = "cancelled"
+                    source_chunks = 0
+                    wf_handled    = True
+
+            if not wf_handled:
+                # ── Step 6: Classify intent ───────────────────────────────────
+                intent = intent_classifier.classify(rewritten, history_dicts)
+                log.info(f"  [intent] {intent}")
+
+                if intent == "write_zoho":
+                    if identity.state == "unknown":
+                        english_response = (
+                            "I wasn't able to find your number in our system. "
+                            "Please contact us to get set up with account access."
+                        )
+                        route         = "unknown"
                         source_chunks = 0
                     else:
-                        english_response = ESCALATION_HOLDING_MESSAGE
-                        route            = "escalate"
-                        source_chunks    = 0
+                        proposal = await write_agent.generate_proposal(
+                            rewritten, history_dicts, identity
+                        )
+                        if proposal:
+                            tool_name, proposal_text, tool_args, risk = proposal
+                            confirm.create_pending(
+                                jid=body.sender,
+                                account_name=identity.account_name,
+                                risk=risk,
+                                tool_name=tool_name,
+                                tool_args=tool_args,
+                                proposal_text=proposal_text,
+                            )
+                            english_response = (
+                                f"{proposal_text}\n\nReply *yes* to confirm or *no* to cancel."
+                            )
+                            route         = "write_proposal"
+                            source_chunks = 0
+                        else:
+                            english_response = ESCALATION_HOLDING_MESSAGE
+                            route            = "escalate"
+                            source_chunks    = 0
 
-            elif intent == "read_zoho":
-                if identity.state == "unknown":
-                    english_response = (
-                        "I wasn't able to find your number in our system. "
-                        "Please contact us to get set up with account access. "
-                        "I'm happy to help with general questions in the meantime!"
-                    )
-                    route         = "unknown"
-                    source_chunks = 0
-                else:
-                    zoho_answer = await zoho_agent.run(
-                        rewritten, history_dicts, identity
-                    )
-                    if zoho_answer:
-                        english_response = zoho_answer
-                        route            = "zoho"
-                        source_chunks    = 0
+                elif intent == "read_zoho":
+                    if identity.state == "unknown":
+                        english_response = (
+                            "I wasn't able to find your number in our system. "
+                            "Please contact us to get set up with account access. "
+                            "I'm happy to help with general questions in the meantime!"
+                        )
+                        route         = "unknown"
+                        source_chunks = 0
                     else:
-                        english_response = ESCALATION_HOLDING_MESSAGE
-                        route            = "escalate"
-                        source_chunks    = 0
+                        zoho_answer = await zoho_agent.run(
+                            rewritten, history_dicts, identity
+                        )
+                        if zoho_answer:
+                            english_response = zoho_answer
+                            route            = "zoho"
+                            source_chunks    = 0
+                        else:
+                            english_response = ESCALATION_HOLDING_MESSAGE
+                            route            = "escalate"
+                            source_chunks    = 0
 
-            elif intent == "general":
-                english_response = general_llm_answer(english_message, body.history)
-                route            = "general"
-                source_chunks    = 0
+                elif intent == "general":
+                    english_response = general_llm_answer(english_message, body.history)
+                    route            = "general"
+                    source_chunks    = 0
 
-            elif intent == "escalate":
-                english_response = ESCALATION_HOLDING_MESSAGE
-                route            = "escalate"
-                source_chunks    = 0
-
-            else:
-                # answer_from_kb — RAG pipeline
-                nodes     = rag.retrieve(rewritten)
-                sufficient = judge.is_sufficient(rewritten, nodes)
-                log.info(f"  [judge] sufficient={sufficient}")
-
-                if sufficient:
-                    english_response = rag.synthesize(enriched, nodes)
-                    route            = "rag"
-                    source_chunks    = len(nodes)
-                else:
+                elif intent == "escalate":
                     english_response = ESCALATION_HOLDING_MESSAGE
                     route            = "escalate"
                     source_chunks    = 0
 
-        # ── Step 6: Translate response back to user's language ────────────────
+                else:
+                    nodes      = rag.retrieve(rewritten)
+                    sufficient = judge.is_sufficient(rewritten, nodes)
+                    log.info(f"  [judge] sufficient={sufficient}")
+                    if sufficient:
+                        english_response = rag.synthesize(enriched, nodes)
+                        route            = "rag"
+                        source_chunks    = len(nodes)
+                    else:
+                        english_response = ESCALATION_HOLDING_MESSAGE
+                        route            = "escalate"
+                        source_chunks    = 0
+
+                # ── Step 6: Translate response back to user's language ────────────────
         final_response = translator.translate_to_language(english_response, source_language, source_script)
 
         latency = int((time.time() - start) * 1000)

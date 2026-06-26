@@ -191,13 +191,17 @@ async def generate_proposal(
     risk = classify_risk(tool_name)
 
     # Hard guard: Books write tools require a resolved books_customer_id.
-    # The LLM may still propose them from the prompt text even when the
-    # tools list was filtered — reject here unconditionally.
-    if (
-        not identity.books_customer_id
-        and tool_name in {"ZohoBooks_create_estimate", "ZohoBooks_create_sales_order"}
-    ):
-        log.error("[write_agent] Books write tool '%s' proposed but no books_customer_id — rejecting", tool_name)
+    # generate_proposal() uses JSON mode (not function calling), so filtering
+    # the tool list in the prompt has no effect — the model picks a name from
+    # the system prompt text and can still propose a Books tool even when
+    # books_customer_id is None. Reject here unconditionally so execute_write
+    # is never called with a placeholder customer_id.
+    _books_write = {"ZohoBooks_create_estimate", "ZohoBooks_create_sales_order"}
+    if tool_name in _books_write and not identity.books_customer_id:
+        log.error(
+            "[write_agent] '%s' proposed but books_customer_id is None for '%s' — rejecting",
+            tool_name, identity.account_name,
+        )
         return None
 
     log.info("[write_agent] proposal: tool=%s risk=%s", tool_name, risk)
@@ -288,3 +292,37 @@ async def execute_write(
         pass   # non-JSON non-error response — treat as success
 
     return result_text
+
+
+# ── Retry wrapper ─────────────────────────────────────────────────────────────
+
+async def execute_with_retry(
+    tool_name:         str,
+    tool_args:         dict,
+    books_customer_id: Optional[str] = None,
+    max_attempts:      int            = 3,
+) -> Optional[str]:
+    """
+    Execute a write with exponential-backoff retry for transient failures.
+
+    Attempt delays: 0s → 1s → 4s (2^0, 2^1 seconds between attempts).
+    Only retries on None returns (network / Zoho errors). Returns immediately
+    on success. After all attempts fail, returns None → caller escalates.
+
+    Use this instead of execute_write() in main.py so a brief Zoho
+    rate-limit or timeout doesn't lose the customer's confirmed action.
+    """
+    import asyncio
+    for attempt in range(max_attempts):
+        result = await execute_write(tool_name, tool_args, books_customer_id)
+        if result is not None:
+            return result
+        if attempt < max_attempts - 1:
+            wait = 2 ** attempt   # 1s, then 4s
+            log.warning(
+                "[write_agent] attempt %d/%d failed for %s — retrying in %ds",
+                attempt + 1, max_attempts, tool_name, wait,
+            )
+            await asyncio.sleep(wait)
+    log.error("[write_agent] all %d attempts failed for %s", max_attempts, tool_name)
+    return None
