@@ -1279,5 +1279,95 @@
         "path_variables"
       ]
     }
+  },
+  {
+    "name": "ZohoBooks_list_contacts",
+    "description": "Retrieve a comprehensive list of all contacts with advanced filters. This operation supports multiple search criteria including contact name, company name, address, email, phone, and general text search. You can filter contacts by status (active, inactive, duplicate, CRM) and sort by various fields. The response includes essential contact information, financial data including outstanding amounts and credit limits, and pagination details for efficient data retrieval.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query_params": {
+          "properties": {
+            "address": {
+              "description": "Search contacts by any of the address fields. Max-length [100] Variants: <code>address_startswith</code> and <code>address_contains</code>",
+              "type": "string"
+            },
+            "company_name": {
+              "description": "Search contacts by company name. Max-length [100] Variants: <code>company_name_startswith</code> and <code>company_name_contains</code>",
+              "type": "string"
+            },
+            "contact_name": {
+              "description": "Search contacts by contact name. Max-length [100] Variants: <code>contact_name_startswith</code> and <code>contact_name_contains</code>. Max-length [100]",
+              "type": "string"
+            },
+            "contact_type": {
+              "description": "Search contacts by contact type. Allowed Values: <code>customer</code>, <code>vendor</code>.",
+              "type": "string"
+            },
+            "email": {
+              "description": "Search contacts by email of the primary contact person. Max-length [100] Variants: <code>email_startswith</code> and <code>email_contains</code>",
+              "type": "string"
+            },
+            "filter_by": {
+              "description": "Filter contacts by status. Allowed Values: <code>Status.All, Status.Active, Status.Inactive, Status.Duplicate, Status.PortalEnabled, Status.PortalDisabled, Invoice.OverDue, Invoice.Unpaid, Status.CreditLimitExceed and Status.Crm</code>",
+              "type": "string"
+            },
+            "first_name": {
+              "description": "Search contacts by first name of the primary contact person. Max-length [100] Variants: <code>first_name_startswith</code> and <code>first_name_contains</code>",
+              "type": "string"
+            },
+            "last_name": {
+              "description": "Search contacts by last name of the primary contact person. Max-length [100] Variants: <code>last_name_startswith</code> and <code>last_name_contains</code>",
+              "type": "string"
+            },
+            "organization_id": {
+              "description": "ID of the organization. Note: This value is a set of numeric characters.",
+              "type": "string"
+            },
+            "page": {
+              "default": 1,
+              "description": "Page number to be fetched. Default value is 1.",
+              "type": "integer"
+            },
+            "per_page": {
+              "default": 10,
+              "description": "Number of records to be fetched per page.",
+              "type": "integer"
+            },
+            "phone": {
+              "description": "Search contacts by phone number of the primary contact person. Max-length [100] Variants: <code>phone_startswith</code> and <code>phone_contains</code>",
+              "type": "string"
+            },
+            "search_text": {
+              "description": "Search contacts by contact name or notes. Max-length [100]",
+              "type": "string"
+            },
+            "sort_column": {
+              "description": "Sort contacts. Allowed Values: <code>contact_name, first_name, last_name, email, outstanding_receivable_amount, created_time and last_modified_time</code>",
+              "type": "string"
+            },
+            "zcrm_account_id": {
+              "description": "CRM Account ID for the contact. Note: This value is a set of numeric characters.",
+              "type": "string"
+            },
+            "zcrm_contact_id": {
+              "description": "CRM Contact ID for the contact. Note: This value is a set of numeric characters.",
+              "type": "string"
+            },
+            "zcrm_vendor_id": {
+              "description": "CRM Vendor ID for the contact. Note: This value is a set of numeric characters.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "organization_id"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "query_params"
+      ]
+    }
   }
 ]

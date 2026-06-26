@@ -40,6 +40,16 @@ _STAFF_PHONES: set[str] = {
     if p.strip().isdigit()
 }
 
+# ── Manual Books customer ID map (fallback) ───────────────────────────────────
+# Used when ZohoBooks_list_contacts authorization fails.
+# Format in .env: BOOKS_CUSTOMER_ID_MAP=King (Sample):3935567000000044076,Acme:123456
+# Find each ID: Zoho Books → Customers → click customer → read from the URL.
+_BOOKS_ID_MAP: dict[str, str] = {}
+for _entry in os.getenv("BOOKS_CUSTOMER_ID_MAP", "").split(","):
+    if ":" in _entry:
+        _name, _bid = _entry.split(":", 1)
+        _BOOKS_ID_MAP[_name.strip()] = _bid.strip()
+
 # ── Identity cache ────────────────────────────────────────────────────────────
 _CACHE_TTL: int = int(os.getenv("IDENTITY_CACHE_TTL", "3600"))   # seconds
 _cache: dict[str, tuple["CustomerIdentity", float]] = {}
@@ -61,12 +71,13 @@ class CustomerIdentity:
     account_name : CRM Account name — doubles as Zoho Books customer_name (known only)
     contact_id   : CRM Contact record ID (known only)
     """
-    state:        str
-    jid:          str
-    phone:        str
-    contact_name: Optional[str] = None
-    account_name: Optional[str] = None
-    contact_id:   Optional[str] = None
+    state:             str
+    jid:               str
+    phone:             str
+    contact_name:      Optional[str] = None
+    account_name:      Optional[str] = None
+    contact_id:        Optional[str] = None   # CRM Contact record ID
+    books_customer_id: Optional[str] = None   # Zoho Books contact_id (for writes)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -127,7 +138,47 @@ async def _crm_search_phone(phone: str) -> Optional[dict]:
     return None
 
 
-# ── Main entry point ──────────────────────────────────────────────────────────
+# ── Books customer_id lookup ──────────────────────────────────────────────────
+
+async def _books_lookup_customer_id(account_name: str) -> Optional[str]:
+    """
+    Resolve the Zoho Books contact_id for a CRM account name.
+
+    Checks the manual BOOKS_CUSTOMER_ID_MAP first (instant, no network call),
+    then falls back to the ZohoBooks_list_contacts API.
+    """
+    from zoho_mcp.config import ZOHO_ORG_ID
+    if not account_name:
+        return None
+
+    # 1. Manual map — instant fallback, no API call
+    if account_name in _BOOKS_ID_MAP:
+        cid = _BOOKS_ID_MAP[account_name]
+        log.info("[identity] Books customer_id=%s via manual map for '%s'", cid, account_name)
+        return cid
+
+    # 2. Live API lookup via ZohoBooks_list_contacts
+    if not ZOHO_ORG_ID:
+        return None
+    try:
+        async with ZohoMCPClient() as zoho:
+            result = await zoho.call_tool("ZohoBooks_list_contacts", {
+                "query_params": {
+                    "organization_id": ZOHO_ORG_ID,
+                    "contact_name":    account_name,
+                }
+            })
+        text     = result_to_text(result)
+        data     = json.loads(text)
+        contacts = data.get("contacts") or []
+        if contacts:
+            cid = contacts[0].get("contact_id")
+            log.info("[identity] Books customer_id=%s via API for '%s'", cid, account_name)
+            return cid
+    except Exception as exc:
+        log.warning("[identity] Books customer_id API lookup failed for '%s': %s",
+                    account_name, exc)
+    return None
 
 async def resolve(jid: str) -> CustomerIdentity:
     """
@@ -170,16 +221,23 @@ async def resolve(jid: str) -> CustomerIdentity:
             else account_raw
         ) or None
 
+        # Look up the Zoho Books contact_id for write operations.
+        # This runs once per customer per cache-TTL window — the result is
+        # stored on the identity so execute_write() can inject it without
+        # making an extra network call.
+        books_customer_id = await _books_lookup_customer_id(account_name) if account_name else None
+
         identity = CustomerIdentity(
-            state        = "known",
-            jid          = jid,
-            phone        = phone,
-            contact_name = contact_name,
-            account_name = account_name,
-            contact_id   = record.get("id"),
+            state             = "known",
+            jid               = jid,
+            phone             = phone,
+            contact_name      = contact_name,
+            account_name      = account_name,
+            contact_id        = record.get("id"),
+            books_customer_id = books_customer_id,
         )
-        log.info("[identity] known | name=%s account=%s",
-                 identity.contact_name, identity.account_name)
+        log.info("[identity] known | name=%s account=%s books_id=%s",
+                 identity.contact_name, identity.account_name, identity.books_customer_id)
     else:
         identity = CustomerIdentity(state="unknown", jid=jid, phone=phone)
         log.info("[identity] unknown | phone=%s", phone)

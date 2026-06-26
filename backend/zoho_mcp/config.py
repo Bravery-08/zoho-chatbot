@@ -58,3 +58,9 @@ def build_auth_headers() -> dict:
                 k, v = pair.split(":", 1)
                 headers[k.strip()] = v.strip()
     return headers
+
+# ── Write MCP server ──────────────────────────────────────────────────────────
+# Separate server authorized as the RESTRICTED SERVICE USER (not your admin account).
+# Stand this up before Phase 3: create the service user → new MCP server → add write tools.
+# Run `python -m zoho_mcp.smoke_test list` with this URL to verify tool names.
+ZOHO_WRITE_MCP_URL = os.getenv("ZOHO_WRITE_MCP_URL", "")

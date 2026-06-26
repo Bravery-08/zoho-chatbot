@@ -1,26 +1,12 @@
 # backend/zoho_mcp/intent.py
 """
-Four-way intent classifier for the Zoho agent pipeline.
+Five-way intent classifier.
 
-Sits between the query rewriter and the RAG / Zoho / general paths in main.py.
-Uses the fast 8B model — this is a cheap routing call, not an answer.
-
-Intents
-───────
-answer_from_kb  — question about company policy, SOPs, product catalogue,
-                  payment terms, shipping procedures, or anything answerable
-                  from the ChromaDB knowledge base without live Zoho data.
-
-read_zoho       — question requiring live data from Zoho One:
-                  order / shipment status, invoice lists, customer balances,
-                  stock levels, lead / deal / contact lookups, purchase orders.
-
-general         — off-topic, general knowledge, greetings, thanks,
-                  calculations, translations, or anything unrelated to business.
-
-escalate        — business-related but requires human judgment:
-                  complaints, pricing negotiations, credit decisions,
-                  or anything neither the KB nor Zoho data can resolve.
+answer_from_kb — policy, SOPs, product catalogue, payment terms: ChromaDB
+read_zoho      — live Zoho data query: orders, invoices, contacts, stock
+write_zoho     — action that would create/update a Zoho record
+general        — off-topic, greetings, calculations, translations
+escalate       — needs a human: complaints, negotiations, credit decisions
 """
 import json
 import logging
@@ -31,7 +17,7 @@ from zoho_mcp.config import GROQ_API_KEY, INTENT_MODEL
 
 log = logging.getLogger(__name__)
 
-INTENTS = ("answer_from_kb", "read_zoho", "general", "escalate")
+INTENTS = ("answer_from_kb", "read_zoho", "write_zoho", "general", "escalate")
 
 _SYSTEM = """
 You classify customer messages for a B2B merchant-export company chatbot.
@@ -40,27 +26,29 @@ Output a single JSON object: {"intent": "<value>"}
 Value must be exactly one of:
 
   answer_from_kb — question about company policy, SOPs, product catalogue,
-                   payment terms, export procedures, shipping rules, or anything
-                   answerable from a static knowledge base without live data.
+                   payment terms, export procedures, or anything answerable
+                   from a static knowledge base without live data.
 
   read_zoho      — question requiring live Zoho data:
-                   order/shipment/invoice status, customer balance, stock levels,
-                   lead/deal/contact lookups, purchase orders, sales orders,
-                   estimates, or any query that needs current records.
+                   order/invoice/shipment status, customer balance, stock levels,
+                   lead/deal/contact lookups, purchase orders, estimates.
 
-  general        — off-topic, general knowledge, greetings, thanks, weather,
-                   exchange rates, calculations, translations, or anything
-                   unrelated to the company's business data.
+  write_zoho     — request to CREATE or UPDATE a Zoho record:
+                   "I need a quote for...", "place an order for...",
+                   "create an enquiry for...", "send me an estimate for...",
+                   "I want to order...", "can you raise a PO for...".
 
-  escalate       — business-related but needs a human: complaints, credit
-                   decisions, pricing negotiations, or questions neither the
-                   knowledge base nor live Zoho data can answer.
+  general        — off-topic, greetings, thanks, weather, exchange rates,
+                   calculations, translations, or unrelated to business data.
+
+  escalate       — needs a human: complaints, credit decisions, pricing
+                   negotiations, refunds, or questions neither KB nor Zoho
+                   data can resolve.
 
 Output ONLY valid JSON. No explanation. No markdown. No preamble.
-Example: {"intent": "read_zoho"}
+Example: {"intent": "write_zoho"}
 """.strip()
 
-# Module-level client — one instance shared across all calls.
 _client: Groq | None = None
 
 
@@ -73,27 +61,10 @@ def _get_client() -> Groq:
 
 def classify(message: str, history: list[dict]) -> str:
     """
-    Classify a rewritten message into one of four intents.
-
-    Parameters
-    ----------
-    message : str
-        The rewritten (context-resolved) user message in English.
-    history : list[dict]
-        Conversation history as {"role": ..., "content": ...} dicts.
-        Last 4 turns are sent for context; full history is ignored to keep
-        the prompt small and the call fast.
-
-    Returns
-    -------
-    str
-        One of: "answer_from_kb" | "read_zoho" | "general" | "escalate".
-        Defaults to "escalate" on any error — humans should always get the
-        message if the classifier fails.
+    Classify a rewritten message into one of five intents.
+    Defaults to 'escalate' on any error.
     """
     client = _get_client()
-
-    # Keep only the most recent 4 turns so the fast model stays within budget.
     recent = history[-4:] if len(history) > 4 else history
     messages = [{"role": "system", "content": _SYSTEM}]
     messages.extend(recent)
@@ -103,10 +74,11 @@ def classify(message: str, history: list[dict]) -> str:
         resp = client.chat.completions.create(
             model=INTENT_MODEL,
             messages=messages,
+            response_format={"type": "json_object"},
             temperature=0,
             max_tokens=24,
         )
-        raw = resp.choices[0].message.content.strip()
+        raw    = resp.choices[0].message.content.strip()
         parsed = json.loads(raw)
         intent = parsed.get("intent", "escalate")
         if intent not in INTENTS:
