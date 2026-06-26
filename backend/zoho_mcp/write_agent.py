@@ -42,10 +42,32 @@ HIGH_RISK_TOOLS: frozenset[str] = frozenset({
 ALL_WRITE_TOOLS: frozenset[str] = LOW_RISK_TOOLS | HIGH_RISK_TOOLS
 
 
-def classify_risk(tool_name: str) -> str:
-    if tool_name in LOW_RISK_TOOLS:  return "low"
-    if tool_name in HIGH_RISK_TOOLS: return "high"
-    return "unknown"   # unknown → treated as high for safety
+def classify_risk(tool_name: str, account_name: Optional[str] = None) -> str:
+    """
+    Return the effective risk level for this tool-account combination.
+
+    Phase 6 addition: high-risk tools that have accumulated
+    GRADUATION_THRESHOLD consecutive clean approvals are promoted to
+    'low' risk and execute without operator approval.
+
+    Lookup order:
+      1. Hardcoded LOW_RISK_TOOLS → always "low"
+      2. Hardcoded HIGH_RISK_TOOLS → check trust_levels table
+         a. Specific account match → use that risk_level
+         b. Wildcard match → use that risk_level
+         c. No entry → default "high"
+      3. Unknown tool → "unknown" (treated as "high" by callers)
+    """
+    if tool_name in LOW_RISK_TOOLS:
+        return "low"
+    if tool_name in HIGH_RISK_TOOLS:
+        try:
+            from zoho_mcp.learning import get_effective_risk
+            return get_effective_risk(tool_name, account_name)
+        except Exception as exc:
+            log.warning("[write_agent] graduation check failed: %s — defaulting to high", exc)
+            return "high"
+    return "unknown"
 
 
 # ── Write tool schema cache ───────────────────────────────────────────────────
@@ -188,7 +210,7 @@ async def generate_proposal(
         log.warning("[write_agent] unknown tool '%s' — rejecting", tool_name)
         return None
 
-    risk = classify_risk(tool_name)
+    risk = classify_risk(tool_name, identity.account_name)
 
     # Hard guard: Books write tools require a resolved books_customer_id.
     # generate_proposal() uses JSON mode (not function calling), so filtering

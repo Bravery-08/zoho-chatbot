@@ -34,6 +34,7 @@ import zoho_mcp.write_agent as write_agent
 import zoho_mcp.workflow    as workflow
 import zoho_mcp.ops         as ops
 import zoho_mcp.digest      as digest
+import zoho_mcp.learning    as learning
 
 logging.basicConfig(
     level=logging.INFO,
@@ -56,6 +57,7 @@ async def lifespan(app: FastAPI):
     audit.init_db()
     workflow.init_db()
     digest.init_db()
+    learning.init_db()
     log.info("Write action DB ready ✅")
 
     # Start background digest scheduler
@@ -337,6 +339,13 @@ async def query_endpoint(request: Request, body: QueryRequest):
                         route         = "zoho_write"
                         source_chunks = 0
                     else:
+                        # All retry attempts failed — log as potential corpus entry
+                        corpus_entry = learning.format_corpus_entry(
+                            message=rewritten,
+                            expected_tool=pending.tool_name,
+                            actual_result="execute_with_retry returned None",
+                        )
+                        log.warning("[learning] ADD TO CORPUS: %s", corpus_entry)
                         wf = workflow.get_active(body.sender)
                         if wf:
                             workflow.fail(wf.id, f"{pending.tool_name} failed after retries")
@@ -606,7 +615,15 @@ async def escalate_resolve(body: EscalationResolveRequest):
         if reject_match:
             confirm.update_status(action_id, "rejected")
             log.info(f"  [approve] REJECTED action={action_id}")
-            # Notify customer of rejection via the normal escalation reply path
+            # ── Phase 6: record rejection feedback ────────────────────────────
+            learning.record_feedback(
+                action_id    = action_id,
+                tool_name    = action.tool_name,
+                account_name = action.account_name,
+                decision     = "rejected",
+                approved_by  = ESCALATION_JID,
+            )
+            # Notify customer
             row = escalate.resolve_escalation(
                 "Your request has been reviewed and could not be approved at this time. "
                 "Please contact us if you have questions.",
@@ -620,10 +637,17 @@ async def escalate_resolve(body: EscalationResolveRequest):
                 customer_msg_id=row["customer_msg_id"] if row else None,
             )
 
-        # APPROVE — execute the write
+        # APPROVE — check for modification note and execute the write
+        # Operator can send: "APPROVE abc123"           → clean approval
+        #                    "APPROVE abc123 qty=300"   → modified approval
+        modification_note = None
+        if approve_match:
+            rest = answer[approve_match.end():].strip()
+            if rest:
+                modification_note = rest
+                log.info(f"  [approve] APPROVE with modification: '{modification_note}'")
+
         log.info(f"  [approve] APPROVED action={action_id} by operator")
-        # Re-resolve identity for the customer to get books_customer_id.
-        # Will hit the cache (1-hour TTL) so no extra network call.
         approval_identity = await identity_resolver.resolve(action.jid)
         result_text = await write_agent.execute_write(
             action.tool_name, action.tool_args,
@@ -643,9 +667,37 @@ async def escalate_resolve(body: EscalationResolveRequest):
                 zoho_response=result_text,
                 approved_by=ESCALATION_JID,
             )
+            # ── Phase 6: record approval feedback + update trust streak ───────
+            decision = "modified" if modification_note else "approved"
+            learning.record_feedback(
+                action_id    = action_id,
+                tool_name    = action.tool_name,
+                account_name = action.account_name,
+                decision     = decision,
+                modification = modification_note,
+                approved_by  = ESCALATION_JID,
+            )
+            # Complete active workflow if applicable
+            wf = workflow.get_active(action.jid)  # already at SO_PENDING_APPROVAL
+            if wf and wf.current_step == workflow.SO_PENDING_APPROVAL:
+                try:
+                    data = json.loads(result_text)
+                    so_id = data.get("salesorder", {}).get("salesorder_id", "")
+                except Exception:
+                    so_id = ""
+                workflow.complete(wf.id, {"salesorder_id": so_id})
+
             customer_answer = "Great news — your request has been approved and processed!"
         else:
             confirm.update_status(action_id, "rejected")
+            # Execution failure — log as potential corpus entry
+            corpus_entry = learning.format_corpus_entry(
+                message=action.proposal_text,
+                expected_tool=action.tool_name,
+                actual_result="execute_write returned None after operator approval",
+                category="execution_failure",
+            )
+            log.warning("[learning] ADD TO CORPUS: %s", corpus_entry)
             customer_answer = (
                 "I tried to process your approved request but encountered an error. "
                 "Our team will follow up shortly."
@@ -727,6 +779,8 @@ async def trigger_digest_now():
 async def ops_summary():
     """Current operational summary — JSON endpoint for dashboards / debugging."""
     return {
-        "summary": ops.get_daily_summary(),
-        "alerts":  ops.get_alerts(),
+        "summary":    ops.get_daily_summary(),
+        "alerts":     ops.get_alerts(),
+        "graduation": learning.get_graduation_status(),
+        "feedback":   learning.get_recent_feedback(limit=5),
     }
