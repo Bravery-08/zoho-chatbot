@@ -74,3 +74,43 @@ export async function resolveEscalation(answer, notificationMsgId = null) {
         return null
     }
 }
+
+// ── Phase 5: Outbox delivery API ──────────────────────────────────────────────
+// Add these functions to bot/src/api.js
+
+export async function getOutboxPending() {
+    try {
+        const response = await axios.get(
+            `${FASTAPI_URL}/outbox/pending`,
+            { timeout: 5000 }
+        )
+        return response.data.messages || []
+    } catch (error) {
+        // Silent failure — outbox polling should never crash the bot
+        return []
+    }
+}
+
+export async function markOutboxDelivered(messageId) {
+    try {
+        await axios.post(
+            `${FASTAPI_URL}/outbox/${messageId}/delivered`,
+            {},
+            { timeout: 5000 }
+        )
+    } catch (error) {
+        console.error('markOutboxDelivered error:', error.message)
+    }
+}
+
+export async function markOutboxFailed(messageId) {
+    try {
+        await axios.post(
+            `${FASTAPI_URL}/outbox/${messageId}/failed`,
+            {},
+            { timeout: 5000 }
+        )
+    } catch (error) {
+        console.error('markOutboxFailed error:', error.message)
+    }
+}

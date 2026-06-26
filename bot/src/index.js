@@ -11,6 +11,7 @@ import pino from 'pino'
 import qrcode from 'qrcode-terminal'
 import * as dotenv from 'dotenv'
 import { handleMessage } from './handler.js'
+import { getOutboxPending, markOutboxDelivered, markOutboxFailed } from './api.js'
 
 dotenv.config()
 
@@ -77,6 +78,38 @@ async function connectToWhatsApp() {
 
         for (const message of messages) {
             await handleMessage(sock, message)
+        }
+    })
+
+    // ── Proactive outbox delivery ────────────────────────────────────────────
+    // Poll for messages the backend wants to push (daily digest, alerts).
+    // Starts polling once the connection is open.
+    let outboxInterval = null
+ 
+    sock.ev.on('connection.update', async (update) => {
+        const { connection } = update
+        if (connection === 'open' && !outboxInterval) {
+            outboxInterval = setInterval(async () => {
+                try {
+                    const pending = await getOutboxPending()
+                    for (const msg of pending) {
+                        try {
+                            await sock.sendMessage(msg.jid, { text: msg.message })
+                            await markOutboxDelivered(msg.id)
+                            console.log(`📤 Delivered outbox msg ${msg.id} to ${msg.jid}`)
+                        } catch (sendErr) {
+                            console.error(`⚠️ Failed to deliver outbox msg ${msg.id}:`, sendErr.message)
+                            await markOutboxFailed(msg.id)
+                        }
+                    }
+                } catch (err) {
+                    // Silent — don't let polling crash the bot
+                }
+            }, 30000)   // poll every 30 seconds
+        }
+        if (connection === 'close' && outboxInterval) {
+            clearInterval(outboxInterval)
+            outboxInterval = null
         }
     })
 }

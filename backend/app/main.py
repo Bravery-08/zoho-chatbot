@@ -2,6 +2,10 @@
 import logging
 import re
 import time
+import asyncio
+import json
+import os
+from datetime import datetime
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
@@ -28,6 +32,8 @@ import zoho_mcp.confirm     as confirm
 import zoho_mcp.audit       as audit
 import zoho_mcp.write_agent as write_agent
 import zoho_mcp.workflow    as workflow
+import zoho_mcp.ops         as ops
+import zoho_mcp.digest      as digest
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,12 +55,107 @@ async def lifespan(app: FastAPI):
     confirm.init_db()
     audit.init_db()
     workflow.init_db()
+    digest.init_db()
     log.info("Write action DB ready ✅")
+
+    # Start background digest scheduler
+    _task = asyncio.create_task(_digest_scheduler())
+
+    yield
+
+    _task.cancel()
+    try:
+        await _task
+    except asyncio.CancelledError:
+        pass
     yield
     log.info("Shutting down.")
 
 
 app = FastAPI(title="WhatsApp RAG Bot", lifespan=lifespan)
+
+
+# ── Background digest scheduler ───────────────────────────────────────────────
+
+async def _digest_scheduler() -> None:
+    """
+    Sends the daily operations digest at DIGEST_HOUR (default 9 AM).
+    Runs as a background asyncio task started in lifespan.
+    Uses a set to prevent double-sending on the same calendar day.
+    """
+    from zoho_mcp.identity import _STAFF_PHONES
+    digest_hour  = int(os.getenv("DIGEST_HOUR", "9"))
+    _sent_today: set[str] = set()
+
+    while True:
+        try:
+            await asyncio.sleep(60)    # check every minute
+            now     = datetime.now()
+            day_key = now.strftime("%Y-%m-%d")
+
+            if now.hour == digest_hour and day_key not in _sent_today:
+                log.info("[digest] triggering daily digest for %d staff JIDs",
+                         len(_STAFF_PHONES))
+                text = digest.generate_digest_text()
+                for phone in _STAFF_PHONES:
+                    jid = f"{phone}@s.whatsapp.net"
+                    mid = digest.schedule_to_outbox(jid, text)
+                    log.info("[digest] queued mid=%s for %s", mid, jid)
+                _sent_today.add(day_key)
+                # Prevent set growing unboundedly
+                if len(_sent_today) > 7:
+                    _sent_today.discard(min(_sent_today))
+
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            log.error("[digest] scheduler error: %s", exc)
+
+
+# ── Ops query LLM synthesis ───────────────────────────────────────────────────
+
+async def _answer_ops_query(message: str) -> str:
+    """
+    Answer an operational question from local SQLite data using Groq.
+    Returns a concise natural-language answer.
+    """
+    from groq import Groq
+    from zoho_mcp.config import GROQ_API_KEY, AGENT_MODEL
+
+    context = ops.get_daily_summary()
+    context["alerts"] = ops.get_alerts()
+
+    client = Groq(api_key=GROQ_API_KEY)
+    system = (
+        "You are an operations assistant for a B2B merchant-export company. "
+        "Answer the question using ONLY the operational data provided. "
+        "Be concise (2-4 sentences). "
+        "Format monetary values as ₹ with Indian comma formatting. "
+        "Refer to times as HH:MM. "
+        "Never mention internal IDs or database field names."
+    )
+    user = (
+        f"Question: {message}\n\n"
+        f"Operational data:\n{json.dumps(context, indent=2, default=str)}"
+    )
+    try:
+        resp = client.chat.completions.create(
+            model=AGENT_MODEL,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user",   "content": user},
+            ],
+            temperature=0.1,
+            max_tokens=256,
+        )
+        return resp.choices[0].message.content.strip()
+    except Exception as exc:
+        log.error("[ops] LLM synthesis failed: %s", exc)
+        return (
+            f"Today: {context.get('quotes_created', 0)} quotes created, "
+            f"{context.get('orders_created', 0)} sales orders, "
+            f"{context.get('pending_approvals', 0)} pending approvals."
+        )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(
@@ -291,8 +392,7 @@ async def query_endpoint(request: Request, body: QueryRequest):
                     so_args = {
                         "body": {
                             "customer_id": "customer_id",
-                            # estimate_id removed — Zoho requires estimate status="Accepted"
-                            # before conversion. SO is created fresh with the same line items.
+                            "estimate_id": est_id,
                             "line_items":  line_items,
                         },
                         "query_params": {"organization_id": "organization_id"},
@@ -405,6 +505,22 @@ async def query_endpoint(request: Request, body: QueryRequest):
                     english_response = general_llm_answer(english_message, body.history)
                     route            = "general"
                     source_chunks    = 0
+
+                elif intent == "ops_query":
+                    # Operational metrics — only available to internal (staff) users.
+                    # Answered from local SQLite (audit log, workflows, pending actions)
+                    # — no Zoho network call needed, instant response.
+                    if identity.state != "internal":
+                        log.warning(
+                            "[ops] ops_query attempted by non-internal user %s",
+                            identity.state,
+                        )
+                        english_response = ESCALATION_HOLDING_MESSAGE
+                        route            = "escalate"
+                    else:
+                        english_response = await _answer_ops_query(rewritten)
+                        route            = "ops"
+                    source_chunks = 0
 
                 elif intent == "escalate":
                     english_response = ESCALATION_HOLDING_MESSAGE
@@ -563,3 +679,54 @@ async def escalate_resolve(body: EscalationResolveRequest):
         chunks_written=chunks_written,
         customer_msg_id=row.get("customer_msg_id"),
     )
+
+# ── Phase 5: Outbox endpoints ─────────────────────────────────────────────────
+# The Baileys bot polls /outbox/pending every 30s and delivers queued messages.
+
+@app.get("/outbox/pending")
+async def get_pending_outbox():
+    """Return pending outbound messages for the Baileys bot to deliver."""
+    return {"messages": digest.get_pending_outbox()}
+
+
+@app.post("/outbox/{message_id}/delivered")
+async def mark_outbox_delivered(message_id: str):
+    """Called by the Baileys bot after successfully sending a message."""
+    digest.mark_delivered(message_id)
+    return {"ok": True, "id": message_id}
+
+
+@app.post("/outbox/{message_id}/failed")
+async def mark_outbox_failed(message_id: str):
+    """Called by the Baileys bot if delivery fails."""
+    digest.mark_failed(message_id)
+    return {"ok": True, "id": message_id}
+
+
+# ── Phase 5: Manual digest trigger (testing / on-demand) ─────────────────────
+
+@app.post("/digest/now")
+async def trigger_digest_now():
+    """
+    Manually trigger a digest for all staff JIDs.
+    Useful for testing Phase 5 without waiting for the scheduled hour,
+    and for on-demand visibility into current pipeline state.
+    """
+    from zoho_mcp.identity import _STAFF_PHONES
+    text = digest.generate_digest_text()
+    outbox_ids = []
+    for phone in _STAFF_PHONES:
+        jid = f"{phone}@s.whatsapp.net"
+        mid = digest.schedule_to_outbox(jid, text)
+        outbox_ids.append(mid)
+    log.info("[digest] manual trigger — queued %d message(s)", len(outbox_ids))
+    return {"digest": text, "outbox_ids": outbox_ids, "jids": len(outbox_ids)}
+
+
+@app.get("/ops/summary")
+async def ops_summary():
+    """Current operational summary — JSON endpoint for dashboards / debugging."""
+    return {
+        "summary": ops.get_daily_summary(),
+        "alerts":  ops.get_alerts(),
+    }
