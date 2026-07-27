@@ -20,7 +20,6 @@ import app.rag as rag
 import app.judge as judge
 import app.escalate as escalate
 import app.kb_writer as kb_writer
-from app.router import classify_query
 from app.general import general_llm_answer
 from app.rewriter import rewrite_query
 from app.config import ESCALATION_HOLDING_MESSAGE, ESCALATION_JID
@@ -401,7 +400,6 @@ async def query_endpoint(request: Request, body: QueryRequest):
                     so_args = {
                         "body": {
                             "customer_id": "customer_id",
-                            "estimate_id": est_id,
                             "line_items":  line_items,
                         },
                         "query_params": {"organization_id": "organization_id"},

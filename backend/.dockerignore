@@ -1,0 +1,22 @@
+# backend/.dockerignore
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.*
+
+# Data and model files — mounted as volumes at runtime, not baked in
+chroma_store/
+data/
+
+# Test files
+app/test_suite.py
+test_phase6.py
+zoho_mcp/eval_results/
+
+# Editor and OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db

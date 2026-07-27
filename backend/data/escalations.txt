@@ -43,3 +43,8 @@ A: I am responsible for answering queries related to our company
 Date: 2026-06-26T05:15:20.955113
 Q: What is the MOQ for silk yarn
 A: APPROVE <ebc42d78-d498-4d4e-b6de-373e14cb3d3f>
+
+---
+Date: 2026-06-27T05:40:45.468998
+Q: how many quotes today?
+A: 5

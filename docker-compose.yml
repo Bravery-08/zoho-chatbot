@@ -1,26 +1,39 @@
+# docker-compose.yml  (place at project root: zoho-chatbot/)
 services:
 
   backend:
-    build: ./backend
-    container_name: rag-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: zoho-backend
     ports:
-      - "8001:8000"
+      - "8000:8000"          # expose for test_suite.py and local debugging
     volumes:
-      - ./backend/chroma_store:/app/chroma_store   # persist vectors
-      - ./backend/data:/app/data                   # mount SOP file
+      - ./backend/data:/app/data               # SQLite DBs (escalations + write_actions)
+      - ./backend/chroma_store:/app/chroma_store  # ChromaDB vector store
+      - ./backend/app:/app/app               # ← mount code live
+      - ./backend/zoho_mcp:/app/zoho_mcp     # ← mount code live
     env_file:
       - ./backend/.env
     restart: unless-stopped
-
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 180s
+      retries: 5
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    
   bot:
-    build: ./bot
-    container_name: whatsapp-bot
-    depends_on:
-      - backend
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: zoho-bot
     volumes:
-      - ./bot/auth_info:/app/auth_info             # persist WA session
+      - ./bot/auth_info:/app/auth_info    # WhatsApp session (persists QR scan)
     env_file:
       - ./bot/.env
-    environment:
-      - FASTAPI_URL=http://backend:8000            # Docker internal network
+    depends_on:
+      backend:
+        condition: service_healthy       # wait for backend health check to pass
     restart: unless-stopped

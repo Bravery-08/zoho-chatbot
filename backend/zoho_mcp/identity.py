@@ -34,11 +34,10 @@ log = logging.getLogger(__name__)
 # STAFF_JIDS: comma-separated phone numbers WITH country code, no + or spaces.
 # Example: STAFF_JIDS=919876543210,918765432109
 # These are matched against the digits-only portion of the incoming JID.
-_STAFF_PHONES: set[str] = {
-    p.strip()
-    for p in os.getenv("STAFF_JIDS", "").split(",")
-    if p.strip().isdigit()
-}
+# After (accepts phone numbers AND full JIDs like 141407654273204@lid):
+_raw_staff    = [p.strip() for p in os.getenv("STAFF_JIDS", "").split(",") if p.strip()]
+_STAFF_PHONES: set[str] = {p for p in _raw_staff if p.isdigit()}   # 917977909705
+_STAFF_JIDS:   set[str] = set(_raw_staff)                           # full JIDs too
 
 # ── Manual Books customer ID map (fallback) ───────────────────────────────────
 # Used when ZohoBooks_list_contacts authorization fails.
@@ -195,7 +194,7 @@ async def resolve(jid: str) -> CustomerIdentity:
     phone = extract_phone(jid)
 
     # 1. Staff whitelist — checked before cache so staff can't be overridden
-    if phone in _STAFF_PHONES:
+    if phone in _STAFF_PHONES or jid in _STAFF_JIDS:
         identity = CustomerIdentity(state="internal", jid=jid, phone=phone)
         log.info("[identity] internal | phone=%s", phone)
         return identity

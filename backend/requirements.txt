@@ -1,24 +1,41 @@
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
-python-dotenv==1.0.1
-groq==0.9.0
+# Web framework
+fastapi
+uvicorn[standard]
 
-# LlamaIndex — pinned to 0.10.x ecosystem
-llama-index-core==0.10.43
-llama-index==0.10.43
-llama-index-llms-groq==0.1.4
-llama-index-embeddings-huggingface==0.2.2
-llama-index-vector-stores-chroma==0.1.10
+# LLM
+groq
 
-# ChromaDB — compatible with llama-index-vector-stores-chroma 0.1.10
-chromadb==0.5.3
+# RAG pipeline — adjust package names to match what's installed in your venv
+# Run: pip show llama-index chromadb sentence-transformers
+chromadb
+sentence-transformers
 
-# Embeddings
-sentence-transformers==3.0.1
+# HTTP
+requests
+httpx>=0.24.0,<0.28.0
 
-# NumPy pinned below 2.0 to avoid chromadb conflict
-numpy<2.0
+# Utilities
+python-dotenv
+python-multipart
 
-httpx==0.27.0
+llama-index                             
+llama-index-agent-openai               
+llama-index-cli                      
+llama-index-core                        
+llama-index-embeddings-huggingface       
+llama-index-embeddings-openai          
+llama-index-indices-managed-llama-cloud  
+llama-index-legacy                     
+llama-index-llms-groq                    
+llama-index-llms-openai                
+llama-index-llms-openai-like          
+llama-index-multi-modal-llms-openai     
+llama-index-program-openai             
+llama-index-question-gen-openai        
+llama-index-readers-file               
+llama-index-readers-llama-parse         
+llama-index-vector-stores-chroma       
+llama-parse                          
+llamaindex-py-client                 
 
-slowapi==0.1.9
+slowapi
