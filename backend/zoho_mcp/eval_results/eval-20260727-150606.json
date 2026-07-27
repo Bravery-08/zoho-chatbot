@@ -1,0 +1,829 @@
+{
+  "summary": {
+    "n": 24,
+    "tool_selection_accuracy": 1.0,
+    "arg_accuracy_on_correct_tool": 0.042,
+    "schema_errors": 23,
+    "latency_p50_ms": 1195,
+    "latency_p95_ms": 1482,
+    "total_input_tokens": 13184,
+    "total_output_tokens": 34,
+    "est_cost_usd": 0.0,
+    "accuracy_by_category": {
+      "crm_leads": 1.0,
+      "crm_deals": 1.0,
+      "crm_contacts": 1.0,
+      "crm_accounts": 1.0,
+      "crm_get": 1.0,
+      "crm_vs_books_ambiguity": 1.0,
+      "crm_module_disambiguation": 1.0
+    }
+  },
+  "results": [
+    {
+      "id": "C001",
+      "command": "Show me all open leads",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "module": "Leads",
+        "criteria": "(Lead Status:equals:Open)"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Leads"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1272,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C002",
+      "command": "Any new leads this week?",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "module": "Leads",
+        "criteria": "(Created_Time:This_Week)"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Leads"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 968,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C003",
+      "command": "Show leads from Maharashtra",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "module": "Leads",
+        "criteria": "BillingState:equals:Maharashtra"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Leads"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1057,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C004",
+      "command": "Unqualified leads not followed up in a week",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "module": "Leads",
+        "criteria": "(Lead Status:equals:Not Contacted) and (Last Activity:not equals:Followed up) and (Created Time:less_than:1w)"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Leads"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1280,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C005",
+      "command": "Find lead from Sunrise Foods",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "word": "Sunrise Foods"
+        }
+      },
+      "predicted_args": {
+        "module": "Leads",
+        "criteria": "Company:Sunrise Foods"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Leads"
+          },
+          "got": "<missing>"
+        },
+        {
+          "key": "query_params",
+          "expected": {
+            "word": "Sunrise Foods"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1901,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C006",
+      "command": "Show all deals closing this month",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "criteria": "Expected_Closing_Date|this_month"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1260,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C007",
+      "command": "What deals are in negotiation stage?",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "criteria": "Stage:Negotiation"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 956,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C008",
+      "command": "Open deals for King Sample",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "criteria": "(Stage:Open) and (Account:King Sample)"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1102,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C009",
+      "command": "Deals won this quarter",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "criteria": "Stage:Closed Won AND Created Time:This Quarter"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1210,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C010",
+      "command": "Deals above 10 lakh not closed yet",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "criteria": "(Amount:greater_than:100000)"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 993,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C011",
+      "command": "Find contact Rajesh Kumar",
+      "category": "crm_contacts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Contacts"
+        }
+      },
+      "predicted_args": {
+        "module": "Contacts",
+        "criteria": "(First Name:is:Rajesh AND Last Name:is:Kumar)"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Contacts"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1195,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C012",
+      "command": "All contacts at Morlong Associates",
+      "category": "crm_contacts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Contacts"
+        }
+      },
+      "predicted_args": {
+        "module": "Contacts",
+        "criteria": "company:Morlong Associates"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Contacts"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1410,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C013",
+      "command": "Show me account details for King Sample",
+      "category": "crm_accounts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Accounts"
+        }
+      },
+      "predicted_args": {
+        "module": "Accounts",
+        "criteria": "account_name:King Sample"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Accounts"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1001,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C014",
+      "command": "Which accounts are in the food export industry?",
+      "category": "crm_accounts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Accounts"
+        }
+      },
+      "predicted_args": {
+        "module": "Accounts",
+        "criteria": "industry:food export"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Accounts"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1246,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C015",
+      "command": "Get deal 3935567000000065001",
+      "category": "crm_get",
+      "expected_tool": "ZohoCRM_getRecord",
+      "predicted_tool": "ZohoCRM_getRecord",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_getRecord did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_getRecord>{\"module\": ",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "recordId": "3935567000000065001"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1390,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C016",
+      "command": "Fetch contact record 4892736000001234",
+      "category": "crm_get",
+      "expected_tool": "ZohoCRM_getRecord",
+      "predicted_tool": "ZohoCRM_getRecord",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_getRecord did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_getRecord>{\"module\": ",
+      "expected_args": {
+        "path_variables": {
+          "module": "Contacts"
+        }
+      },
+      "predicted_args": {
+        "module": "Contacts",
+        "recordId": "4892736000001234"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Contacts"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1012,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C017",
+      "command": "Show orders from King Sample",
+      "category": "crm_vs_books_ambiguity",
+      "expected_tool": "ZohoBooks_list_sales_orders",
+      "predicted_tool": "ZohoBooks_list_sales_orders",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "query_params": {
+          "customer_name": "King (Sample)"
+        }
+      },
+      "predicted_args": {
+        "query_params": {
+          "customer_name": "King Sample",
+          "organization_id": "your_organization_id"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "query_params",
+          "expected": {
+            "customer_name": "King (Sample)"
+          },
+          "got": {
+            "customer_name": "King Sample",
+            "organization_id": "your_organization_id"
+          }
+        }
+      ],
+      "latency_ms": 1052,
+      "prompt_tokens": 13184,
+      "completion_tokens": 34,
+      "total_tokens": 13218
+    },
+    {
+      "id": "C018",
+      "command": "King Sample's invoices",
+      "category": "crm_vs_books_ambiguity",
+      "expected_tool": "ZohoBooks_list_invoices",
+      "predicted_tool": "ZohoBooks_list_invoices",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoBooks_list_invoices did not match schema: errors: [missing properties: 'query_params']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoBooks_list_invoices>{",
+      "expected_args": {},
+      "predicted_args": {
+        "customer_name": "King Sample",
+        "organization_id": "your_organization_id"
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1075,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C019",
+      "command": "What's King Sample's deal pipeline?",
+      "category": "crm_vs_books_ambiguity",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "criteria": "King Sample"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1482,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C020",
+      "command": "Show me leads not contacts",
+      "category": "crm_module_disambiguation",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "module": "Leads",
+        "criteria": ""
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Leads"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1093,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C021",
+      "command": "Find Rajesh by phone 9876543210",
+      "category": "crm_contacts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Contacts"
+        },
+        "query_params": {
+          "phone": "9876543210"
+        }
+      },
+      "predicted_args": {
+        "module": "Contacts",
+        "phone": "9876543210"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Contacts"
+          },
+          "got": "<missing>"
+        },
+        {
+          "key": "query_params",
+          "expected": {
+            "phone": "9876543210"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1166,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C022",
+      "command": "Search deals not leads for Sunrise Foods",
+      "category": "crm_module_disambiguation",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "query": "Sunrise Foods"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1325,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C023",
+      "command": "Get deal with record id 3935567000000070001",
+      "category": "crm_get",
+      "expected_tool": "ZohoCRM_getRecord",
+      "predicted_tool": "ZohoCRM_getRecord",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_getRecord did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_getRecord>{\"module\": ",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "recordId": "3935567000000070001"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1024,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C024",
+      "command": "Search for deals closing in July 2026",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': \"tool call validation failed: parameters for tool ZohoCRM_searchRecords did not match schema: errors: [missing properties: 'path_variables']\", 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<function=ZohoCRM_searchRecords>{\"m",
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "module": "Deals",
+        "criteria": "(Expected_Closing_Date|starts_with|2026-07)"
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": "<missing>"
+        }
+      ],
+      "latency_ms": 1409,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    }
+  ]
+}

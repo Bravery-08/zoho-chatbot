@@ -37,6 +37,7 @@ from zoho_mcp.config import (
     PRICE_PER_MTOK_INPUT,
     PRICE_PER_MTOK_OUTPUT,
 )
+from zoho_mcp.agent import _ROUTING_PROMPT as AGENT_SYSTEM_PROMPT
 
 logging.basicConfig(
     level=logging.INFO,
@@ -48,52 +49,6 @@ log = logging.getLogger("zoho_eval")
 HERE = os.path.dirname(__file__)
 DEFAULT_CORPUS = os.path.join(HERE, "corpus.jsonl")
 RESULTS_DIR = os.path.join(HERE, "eval_results")
-
-# This should mirror the system prompt of the eventual agent, so the eval is a
-# faithful proxy for production behaviour (Phase 1 will reuse/evolve it).
-AGENT_SYSTEM_PROMPT = (
-    "You are an operations agent for a B2B merchant-export company. "
-    "You have access ONLY to the Zoho business data tools provided — "
-    "no search engines, translators, calculators, or any other tools. "
-    "Never call a tool not explicitly in the provided list.\n\n"
-
-    "WHEN TO CALL A TOOL: only when the user needs to look up live company "
-    "data from Zoho (contacts, invoices, orders, stock, shipments, balances). "
-    "Do NOT call any tool for: general knowledge questions, 'how to' questions, "
-    "weather, exchange rates, time, translations, calculations, or anything "
-    "that cannot be answered by reading records from Zoho.\n\n"
-
-    "ROUTING RULES — apply when two tools could both fit:\n\n"
-
-    "1. CRM LOOKUPS: use ZohoCRM_searchRecords for any search by name, company, "
-    "location, stage, or attribute (contacts, leads, deals, accounts). "
-    "Use ZohoCRM_getRecord only when you have an explicit numeric record ID "
-    "in the message.\n\n"
-
-    "2. PURCHASE ORDERS: always ZohoInventory_list_purchase_orders. "
-    "Invoices are outbound customer bills; POs are inbound supplier documents — "
-    "never substitute one for the other.\n\n"
-
-    "3. SALES ORDERS — by context:\n"
-    "   • Specific SO number (SO-XXXXX format) → ZohoInventory_get_sales_order.\n"
-    "   • Listing or filtering multiple SOs → ZohoBooks_list_sales_orders.\n\n"
-
-    "4. BALANCES vs INVOICES:\n"
-    "   • Total owed, overall receivables, customer balance → "
-    "ZohoBooks_get_customer_balances_report.\n"
-    "   • Individual invoice, unpaid/overdue invoices → ZohoBooks_list_invoices.\n\n"
-
-    "5. SHIPMENTS vs SALES ORDERS: use ZohoInventory_get_shipment_order when "
-    "the question mentions shipment, shipping, or dispatch. "
-    "Use ZohoInventory_get_sales_order for general order status.\n\n"
-
-    "6. AGGREGATIONS: do NOT call any tool for rankings, top-N lists, "
-    "breakdowns by region, trends, or cross-record summaries — "
-    "no tool supports aggregation.\n\n"
-
-    "Do not invent IDs or values not present in the message."
-)
-
 
 # ── Loading ───────────────────────────────────────────────────────────────────
 
@@ -132,7 +87,9 @@ async def gather_tools(schema_file: str | None) -> list[dict]:
     async with ZohoMCPClient() as zoho:
         mcp_tools = await zoho.list_tools()
     log.info("Fetched %d tools live from Zoho MCP", len(mcp_tools))
-    return tools_to_groq_schema(mcp_tools)
+    _EXCLUDED = frozenset({"ZohoBooks_list_contacts"})
+    return [t for t in tools_to_groq_schema(mcp_tools)
+            if t["function"]["name"] not in _EXCLUDED]
 
 
 # ── Scoring ───────────────────────────────────────────────────────────────────

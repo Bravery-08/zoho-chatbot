@@ -1,0 +1,1733 @@
+{
+  "summary": {
+    "n": 64,
+    "tool_selection_accuracy": 0.922,
+    "arg_accuracy_on_correct_tool": 0.924,
+    "schema_errors": 1,
+    "latency_p50_ms": 1323,
+    "latency_p95_ms": 3301,
+    "total_input_tokens": 800399,
+    "total_output_tokens": 2453,
+    "est_cost_usd": 0.0,
+    "accuracy_by_category": {
+      "crm_search": 1.0,
+      "crm_get": 1.0,
+      "books_invoices": 1.0,
+      "books_estimates": 1.0,
+      "books_sales_orders": 1.0,
+      "books_balances": 1.0,
+      "inventory_item": 1.0,
+      "inventory_so": 1.0,
+      "inventory_po": 1.0,
+      "inventory_shipment": 1.0,
+      "negative_no_tool": 0.333,
+      "negative_scope": 0.75,
+      "negative_convo": 0.333,
+      "crm_leads": 1.0,
+      "crm_deals": 1.0,
+      "crm_contacts": 1.0,
+      "crm_accounts": 1.0,
+      "crm_vs_books_ambiguity": 1.0,
+      "crm_module_disambiguation": 1.0
+    }
+  },
+  "results": [
+    {
+      "id": "C001",
+      "command": "List all leads that came in this week.",
+      "category": "crm_search",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "criteria": "(Created_Date:this_week)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1485,
+      "prompt_tokens": 12705,
+      "completion_tokens": 37,
+      "total_tokens": 12742
+    },
+    {
+      "id": "C002",
+      "command": "Show all contacts at Sunrise Agro Exports.",
+      "category": "crm_search",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Contacts"
+        },
+        "query_params": {
+          "criteria": "(Company:equals:Sunrise Agro Exports)",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1170,
+      "prompt_tokens": 12706,
+      "completion_tokens": 49,
+      "total_tokens": 12755
+    },
+    {
+      "id": "C003",
+      "command": "Which deals are currently in the Negotiation stage?",
+      "category": "crm_search",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "(Stage:equals:Negotiation)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1072,
+      "prompt_tokens": 12706,
+      "completion_tokens": 39,
+      "total_tokens": 12745
+    },
+    {
+      "id": "C004",
+      "command": "Find all leads from UAE.",
+      "category": "crm_search",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "criteria": "(Country:equals:UAE)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1349,
+      "prompt_tokens": 12702,
+      "completion_tokens": 38,
+      "total_tokens": 12740
+    },
+    {
+      "id": "C005",
+      "command": "Show open deals with value above 10 lakh.",
+      "category": "crm_search",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "(Stage:Open AND Amount:>=100000)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1101,
+      "prompt_tokens": 12706,
+      "completion_tokens": 41,
+      "total_tokens": 12747
+    },
+    {
+      "id": "C006",
+      "command": "Find the contact details for Rajesh Kumar.",
+      "category": "crm_search",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Contacts"
+        },
+        "query_params": {
+          "criteria": "(First_Name:is:Rajesh AND Last_Name:is:Kumar)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1704,
+      "prompt_tokens": 12705,
+      "completion_tokens": 47,
+      "total_tokens": 12752
+    },
+    {
+      "id": "C007",
+      "command": "Which deals are closing this month?",
+      "category": "crm_search",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "(Stage:equals:Closed Won) AND (Closing Date:this_month)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1164,
+      "prompt_tokens": 12703,
+      "completion_tokens": 46,
+      "total_tokens": 12749
+    },
+    {
+      "id": "C008",
+      "command": "Search for accounts in the food import sector.",
+      "category": "crm_search",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Accounts"
+        },
+        "query_params": {
+          "criteria": "(Industry:equals:Food Import)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1071,
+      "prompt_tokens": 12705,
+      "completion_tokens": 37,
+      "total_tokens": 12742
+    },
+    {
+      "id": "C009",
+      "command": "Get the CRM record for lead ID 4892736000001234056.",
+      "category": "crm_get",
+      "expected_tool": "ZohoCRM_getRecord",
+      "predicted_tool": "ZohoCRM_getRecord",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads",
+          "recordId": "4892736000001234056"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1218,
+      "prompt_tokens": 12712,
+      "completion_tokens": 36,
+      "total_tokens": 12748
+    },
+    {
+      "id": "C010",
+      "command": "Pull up deal record 4892736000005678012.",
+      "category": "crm_get",
+      "expected_tool": "ZohoCRM_getRecord",
+      "predicted_tool": "ZohoCRM_getRecord",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals",
+          "recordId": "4892736000005678012"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 941,
+      "prompt_tokens": 12709,
+      "completion_tokens": 36,
+      "total_tokens": 12745
+    },
+    {
+      "id": "C011",
+      "command": "Show me all unpaid invoices.",
+      "category": "books_invoices",
+      "expected_tool": "ZohoBooks_list_invoices",
+      "predicted_tool": "ZohoBooks_list_invoices",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "filter_by": "Status.Unpaid",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 937,
+      "prompt_tokens": 12702,
+      "completion_tokens": 34,
+      "total_tokens": 12736
+    },
+    {
+      "id": "C012",
+      "command": "List all overdue invoices.",
+      "category": "books_invoices",
+      "expected_tool": "ZohoBooks_list_invoices",
+      "predicted_tool": "ZohoBooks_list_invoices",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "filter_by": "Status.Overdue",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1200,
+      "prompt_tokens": 12701,
+      "completion_tokens": 35,
+      "total_tokens": 12736
+    },
+    {
+      "id": "C013",
+      "command": "Show invoices sent to Al Seer Trading this month.",
+      "category": "books_invoices",
+      "expected_tool": "ZohoBooks_list_invoices",
+      "predicted_tool": "ZohoBooks_list_invoices",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "customer_name": "Al Seer Trading",
+          "date_end": "2024-02-29",
+          "date_start": "2024-02-01",
+          "organization_id": "organization_id",
+          "status": "Sent"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1135,
+      "prompt_tokens": 12707,
+      "completion_tokens": 65,
+      "total_tokens": 12772
+    },
+    {
+      "id": "C014",
+      "command": "Get the last invoice we raised for Global Spice Traders.",
+      "category": "books_invoices",
+      "expected_tool": "ZohoBooks_list_invoices",
+      "predicted_tool": "ZohoBooks_list_invoices",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "customer_name": "Global Spice Traders",
+          "organization_id": "organization_id",
+          "page": "1",
+          "per_page": "1",
+          "sort_column": "created_time",
+          "sort_order": "desc"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1150,
+      "prompt_tokens": 12708,
+      "completion_tokens": 63,
+      "total_tokens": 12771
+    },
+    {
+      "id": "C015",
+      "command": "List all estimates sent this month.",
+      "category": "books_estimates",
+      "expected_tool": "ZohoBooks_list_estimates",
+      "predicted_tool": "ZohoBooks_list_estimates",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "date_start": "this month",
+          "filter_by": "Status.Sent",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1065,
+      "prompt_tokens": 12703,
+      "completion_tokens": 42,
+      "total_tokens": 12745
+    },
+    {
+      "id": "C016",
+      "command": "Show me draft estimates that are still pending.",
+      "category": "books_estimates",
+      "expected_tool": "ZohoBooks_list_estimates",
+      "predicted_tool": "ZohoBooks_list_estimates",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "filter_by": "Status.Draft",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1367,
+      "prompt_tokens": 12705,
+      "completion_tokens": 34,
+      "total_tokens": 12739
+    },
+    {
+      "id": "C017",
+      "command": "Show all open sales orders.",
+      "category": "books_sales_orders",
+      "expected_tool": "ZohoBooks_list_sales_orders",
+      "predicted_tool": "ZohoBooks_list_sales_orders",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "filter_by": "Status.Open",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1070,
+      "prompt_tokens": 12702,
+      "completion_tokens": 33,
+      "total_tokens": 12735
+    },
+    {
+      "id": "C018",
+      "command": "List sales orders created this week.",
+      "category": "books_sales_orders",
+      "expected_tool": "ZohoBooks_list_sales_orders",
+      "predicted_tool": "ZohoBooks_list_sales_orders",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "created_date_start": "this week",
+          "filter_by": "Status.All",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1216,
+      "prompt_tokens": 12703,
+      "completion_tokens": 42,
+      "total_tokens": 12745
+    },
+    {
+      "id": "C019",
+      "command": "Show me the receivables balance report \u2014 what do our customers owe us overall?",
+      "category": "books_balances",
+      "expected_tool": "ZohoBooks_get_customer_balances_report",
+      "predicted_tool": "ZohoBooks_get_customer_balances_report",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "organization_id": "organization_id",
+          "response_option": "1"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1189,
+      "prompt_tokens": 12713,
+      "completion_tokens": 34,
+      "total_tokens": 12747
+    },
+    {
+      "id": "C020",
+      "command": "Show me the full customer balances report for receivables.",
+      "category": "books_balances",
+      "expected_tool": "ZohoBooks_get_customer_balances_report",
+      "predicted_tool": "ZohoBooks_get_customer_balances_report",
+      "tool_correct": true,
+      "schema_error": true,
+      "schema_error_msg": "Error code: 400 - {'error': {'message': 'tool call validation failed: parameters for tool ZohoBooks_get_customer_balances_report did not match schema: errors: [`/query_params/response_option`: value must be \"1\"]', 'type': 'invalid_request_error', 'code': 'tool_use_failed', 'failed_generation': '<fun",
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "organization_id": "organization_id",
+          "response_option": "0"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1119,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+    },
+    {
+      "id": "C021",
+      "command": "How many units of basmati rice 25kg bags are in stock?",
+      "category": "inventory_item",
+      "expected_tool": "ZohoInventory_get_item",
+      "predicted_tool": "ZohoInventory_get_item",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "item_id": "basmati_rice_25kg"
+        },
+        "query_params": {
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1323,
+      "prompt_tokens": 12712,
+      "completion_tokens": 42,
+      "total_tokens": 12754
+    },
+    {
+      "id": "C022",
+      "command": "Get the details for inventory item SKU-442.",
+      "category": "inventory_item",
+      "expected_tool": "ZohoInventory_get_item",
+      "predicted_tool": "ZohoInventory_get_item",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "item_id": "SKU-442"
+        },
+        "query_params": {
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1047,
+      "prompt_tokens": 12706,
+      "completion_tokens": 37,
+      "total_tokens": 12743
+    },
+    {
+      "id": "C023",
+      "command": "What is the current stock level for turmeric powder 1kg?",
+      "category": "inventory_item",
+      "expected_tool": "ZohoInventory_get_item",
+      "predicted_tool": "ZohoInventory_get_item",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "item_id": "turmeric powder 1kg"
+        },
+        "query_params": {
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1043,
+      "prompt_tokens": 12710,
+      "completion_tokens": 40,
+      "total_tokens": 12750
+    },
+    {
+      "id": "C024",
+      "command": "What is the status of inventory sales order SO-00142?",
+      "category": "inventory_so",
+      "expected_tool": "ZohoInventory_get_sales_order",
+      "predicted_tool": "ZohoInventory_get_sales_order",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "salesorder_id": "SO-00142"
+        },
+        "query_params": {
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1275,
+      "prompt_tokens": 12709,
+      "completion_tokens": 40,
+      "total_tokens": 12749
+    },
+    {
+      "id": "C025",
+      "command": "Show me the details for SO-00201.",
+      "category": "inventory_so",
+      "expected_tool": "ZohoInventory_get_sales_order",
+      "predicted_tool": "ZohoInventory_get_sales_order",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "salesorder_id": "SO-00201"
+        },
+        "query_params": {
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1464,
+      "prompt_tokens": 12706,
+      "completion_tokens": 40,
+      "total_tokens": 12746
+    },
+    {
+      "id": "C026",
+      "command": "Get sales order SO-00189.",
+      "category": "inventory_so",
+      "expected_tool": "ZohoInventory_get_sales_order",
+      "predicted_tool": "ZohoInventory_get_sales_order",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "salesorder_id": "SO-00189"
+        },
+        "query_params": {
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1054,
+      "prompt_tokens": 12704,
+      "completion_tokens": 40,
+      "total_tokens": 12744
+    },
+    {
+      "id": "C027",
+      "command": "Are there any purchase orders to our suppliers still pending approval?",
+      "category": "inventory_po",
+      "expected_tool": "ZohoInventory_list_purchase_orders",
+      "predicted_tool": "ZohoInventory_list_purchase_orders",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "filter_by": "Status.Pending Approval",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1322,
+      "prompt_tokens": 12708,
+      "completion_tokens": 34,
+      "total_tokens": 12742
+    },
+    {
+      "id": "C028",
+      "command": "List all open POs we have raised with vendors.",
+      "category": "inventory_po",
+      "expected_tool": "ZohoInventory_list_purchase_orders",
+      "predicted_tool": "ZohoInventory_list_purchase_orders",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "filter_by": "Status.Open",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 958,
+      "prompt_tokens": 12707,
+      "completion_tokens": 33,
+      "total_tokens": 12740
+    },
+    {
+      "id": "C029",
+      "command": "What is the shipment status for order SO-00138?",
+      "category": "inventory_shipment",
+      "expected_tool": [
+        "ZohoInventory_get_shipment_order",
+        "ZohoInventory_get_sales_order"
+      ],
+      "predicted_tool": "ZohoInventory_get_sales_order",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "salesorder_id": "SO-00138"
+        },
+        "query_params": {
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1645,
+      "prompt_tokens": 12708,
+      "completion_tokens": 40,
+      "total_tokens": 12748
+    },
+    {
+      "id": "C030",
+      "command": "Get the shipment details for SO-00175.",
+      "category": "inventory_shipment",
+      "expected_tool": [
+        "ZohoInventory_get_shipment_order",
+        "ZohoInventory_get_sales_order"
+      ],
+      "predicted_tool": "ZohoInventory_get_shipment_order",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "shipmentorder_id": "SO-00175"
+        },
+        "query_params": {
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1841,
+      "prompt_tokens": 12706,
+      "completion_tokens": 41,
+      "total_tokens": 12747
+    },
+    {
+      "id": "C031",
+      "command": "Who are our top 5 customers by revenue this quarter?",
+      "category": "negative_no_tool",
+      "expected_tool": null,
+      "predicted_tool": "ZohoBooks_list_invoices",
+      "tool_correct": false,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "filter_by": "Status.All",
+          "organization_id": "organization_id",
+          "page": "1",
+          "per_page": "200",
+          "sort_column": "total"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [],
+      "latency_ms": 1141,
+      "prompt_tokens": 12708,
+      "completion_tokens": 53,
+      "total_tokens": 12761
+    },
+    {
+      "id": "C032",
+      "command": "Which countries do most of our export competitors sell to?",
+      "category": "negative_no_tool",
+      "expected_tool": null,
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": false,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "criteria": "(Competitor = 'Yes') AND (Country != '')",
+          "fields": "Country"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [],
+      "latency_ms": 1011,
+      "prompt_tokens": 12707,
+      "completion_tokens": 49,
+      "total_tokens": 12756
+    },
+    {
+      "id": "C033",
+      "command": "Create an invoice for Nile Trading for $5000.",
+      "category": "negative_no_tool",
+      "expected_tool": null,
+      "predicted_tool": null,
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {},
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1514,
+      "prompt_tokens": 12707,
+      "completion_tokens": 41,
+      "total_tokens": 12748
+    },
+    {
+      "id": "C034",
+      "command": "Will it rain in Delhi tomorrow?",
+      "category": "negative_scope",
+      "expected_tool": null,
+      "predicted_tool": null,
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {},
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1351,
+      "prompt_tokens": 12703,
+      "completion_tokens": 29,
+      "total_tokens": 12732
+    },
+    {
+      "id": "C035",
+      "command": "What is the current USD to INR exchange rate?",
+      "category": "negative_scope",
+      "expected_tool": null,
+      "predicted_tool": null,
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {},
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1127,
+      "prompt_tokens": 12707,
+      "completion_tokens": 16,
+      "total_tokens": 12723
+    },
+    {
+      "id": "C036",
+      "command": "Explain the difference between CIF and FOB pricing.",
+      "category": "negative_scope",
+      "expected_tool": null,
+      "predicted_tool": null,
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {},
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1550,
+      "prompt_tokens": 12707,
+      "completion_tokens": 7,
+      "total_tokens": 12714
+    },
+    {
+      "id": "C037",
+      "command": "What is the capital of Saudi Arabia?",
+      "category": "negative_scope",
+      "expected_tool": null,
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": false,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Countries"
+        },
+        "query_params": {
+          "criteria": "(Country_Name:equals:Saudi Arabia)"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [],
+      "latency_ms": 1271,
+      "prompt_tokens": 12704,
+      "completion_tokens": 38,
+      "total_tokens": 12742
+    },
+    {
+      "id": "C038",
+      "command": "Hi there.",
+      "category": "negative_convo",
+      "expected_tool": null,
+      "predicted_tool": null,
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {},
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1234,
+      "prompt_tokens": 12699,
+      "completion_tokens": 12,
+      "total_tokens": 12711
+    },
+    {
+      "id": "C039",
+      "command": "Thanks, that is all for now.",
+      "category": "negative_convo",
+      "expected_tool": null,
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": false,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "criteria": "(Lead Status:equals:New)",
+          "fields": "Lead ID, Company, Email"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [],
+      "latency_ms": 1137,
+      "prompt_tokens": 12704,
+      "completion_tokens": 49,
+      "total_tokens": 12753
+    },
+    {
+      "id": "C040",
+      "command": "Okay, got it.",
+      "category": "negative_convo",
+      "expected_tool": null,
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": false,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "criteria": "(Lead Status:equals:New)"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [],
+      "latency_ms": 1106,
+      "prompt_tokens": 12701,
+      "completion_tokens": 38,
+      "total_tokens": 12739
+    },
+    {
+      "id": "C001",
+      "command": "Show me all open leads",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "criteria": "(Lead Status:equals:Open)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1085,
+      "prompt_tokens": 12701,
+      "completion_tokens": 39,
+      "total_tokens": 12740
+    },
+    {
+      "id": "C002",
+      "command": "Any new leads this week?",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "criteria": "(Created_Date:this_week)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1477,
+      "prompt_tokens": 12702,
+      "completion_tokens": 37,
+      "total_tokens": 12739
+    },
+    {
+      "id": "C003",
+      "command": "Show leads from Maharashtra",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "criteria": "(State:equals:Maharashtra)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1159,
+      "prompt_tokens": 12700,
+      "completion_tokens": 39,
+      "total_tokens": 12739
+    },
+    {
+      "id": "C004",
+      "command": "Unqualified leads not followed up in a week",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "criteria": "(Lead Status:equals:Not Contacted) and (Last Activity:not equals:NULL) and (Created Time:older_than:1w)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2373,
+      "prompt_tokens": 12705,
+      "completion_tokens": 60,
+      "total_tokens": 12765
+    },
+    {
+      "id": "C005",
+      "command": "Find lead from Sunrise Foods",
+      "category": "crm_leads",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "word": "Sunrise Foods"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {
+          "company": "Sunrise Foods"
+        }
+      },
+      "args_score": 0.5,
+      "arg_mismatches": [
+        {
+          "key": "query_params",
+          "expected": {
+            "word": "Sunrise Foods"
+          },
+          "got": {
+            "company": "Sunrise Foods"
+          }
+        }
+      ],
+      "latency_ms": 1373,
+      "prompt_tokens": 12701,
+      "completion_tokens": 35,
+      "total_tokens": 12736
+    },
+    {
+      "id": "C006",
+      "command": "Show all deals closing this month",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "Expected_Closing_Date|this_month"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 3611,
+      "prompt_tokens": 12702,
+      "completion_tokens": 39,
+      "total_tokens": 12741
+    },
+    {
+      "id": "C007",
+      "command": "What deals are in negotiation stage?",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "(Stage:equals:Negotiation)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2219,
+      "prompt_tokens": 12703,
+      "completion_tokens": 38,
+      "total_tokens": 12741
+    },
+    {
+      "id": "C008",
+      "command": "Open deals for King Sample",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "(Stage:equals:Open) and (Account_Name:equals:King Sample)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2261,
+      "prompt_tokens": 12701,
+      "completion_tokens": 47,
+      "total_tokens": 12748
+    },
+    {
+      "id": "C009",
+      "command": "Deals won this quarter",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "Stage:Closed Won AND Created Date:this quarter"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2787,
+      "prompt_tokens": 12701,
+      "completion_tokens": 41,
+      "total_tokens": 12742
+    },
+    {
+      "id": "C010",
+      "command": "Deals above 10 lakh not closed yet",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "(Amount:>=:100000)",
+          "filter_by": "Status.not_equal.Closed"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2345,
+      "prompt_tokens": 12705,
+      "completion_tokens": 48,
+      "total_tokens": 12753
+    },
+    {
+      "id": "C011",
+      "command": "Find contact Rajesh Kumar",
+      "category": "crm_contacts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Contacts"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Contacts"
+        },
+        "query_params": {
+          "criteria": "(First Name:is:Rajesh AND Last Name:is:Kumar)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2603,
+      "prompt_tokens": 12701,
+      "completion_tokens": 47,
+      "total_tokens": 12748
+    },
+    {
+      "id": "C012",
+      "command": "All contacts at Morlong Associates",
+      "category": "crm_contacts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Contacts"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Contacts"
+        },
+        "query_params": {
+          "criteria": "(Company:Morlong Associates)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2260,
+      "prompt_tokens": 12702,
+      "completion_tokens": 36,
+      "total_tokens": 12738
+    },
+    {
+      "id": "C013",
+      "command": "Show me account details for King Sample",
+      "category": "crm_accounts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Accounts"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Accounts"
+        },
+        "query_params": {
+          "criteria": "(accountname:equals:King Sample)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 3301,
+      "prompt_tokens": 12703,
+      "completion_tokens": 38,
+      "total_tokens": 12741
+    },
+    {
+      "id": "C014",
+      "command": "Which accounts are in the food export industry?",
+      "category": "crm_accounts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Accounts"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Accounts"
+        },
+        "query_params": {
+          "criteria": "(Industry:equals:Food Export)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2297,
+      "prompt_tokens": 12705,
+      "completion_tokens": 37,
+      "total_tokens": 12742
+    },
+    {
+      "id": "C015",
+      "command": "Get deal 3935567000000065001",
+      "category": "crm_get",
+      "expected_tool": "ZohoCRM_getRecord",
+      "predicted_tool": "ZohoCRM_getRecord",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals",
+          "recordId": "3935567000000065001"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": {
+            "module": "Deals",
+            "recordId": "3935567000000065001"
+          }
+        }
+      ],
+      "latency_ms": 2543,
+      "prompt_tokens": 12706,
+      "completion_tokens": 36,
+      "total_tokens": 12742
+    },
+    {
+      "id": "C016",
+      "command": "Fetch contact record 4892736000001234",
+      "category": "crm_get",
+      "expected_tool": "ZohoCRM_getRecord",
+      "predicted_tool": "ZohoCRM_getRecord",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Contacts"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Contacts",
+          "recordId": "4892736000001234"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Contacts"
+          },
+          "got": {
+            "module": "Contacts",
+            "recordId": "4892736000001234"
+          }
+        }
+      ],
+      "latency_ms": 2079,
+      "prompt_tokens": 12706,
+      "completion_tokens": 34,
+      "total_tokens": 12740
+    },
+    {
+      "id": "C017",
+      "command": "Show orders from King Sample",
+      "category": "crm_vs_books_ambiguity",
+      "expected_tool": "ZohoBooks_list_sales_orders",
+      "predicted_tool": "ZohoBooks_list_sales_orders",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "query_params": {
+          "customer_name": "King (Sample)"
+        }
+      },
+      "predicted_args": {
+        "query_params": {
+          "customer_name": "King Sample",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "query_params",
+          "expected": {
+            "customer_name": "King (Sample)"
+          },
+          "got": {
+            "customer_name": "King Sample",
+            "organization_id": "organization_id"
+          }
+        }
+      ],
+      "latency_ms": 3348,
+      "prompt_tokens": 12701,
+      "completion_tokens": 33,
+      "total_tokens": 12734
+    },
+    {
+      "id": "C018",
+      "command": "King Sample's invoices",
+      "category": "crm_vs_books_ambiguity",
+      "expected_tool": "ZohoBooks_list_invoices",
+      "predicted_tool": "ZohoBooks_list_invoices",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {},
+      "predicted_args": {
+        "query_params": {
+          "customer_name": "King Sample",
+          "organization_id": "organization_id"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2793,
+      "prompt_tokens": 12700,
+      "completion_tokens": 33,
+      "total_tokens": 12733
+    },
+    {
+      "id": "C019",
+      "command": "What's King Sample's deal pipeline?",
+      "category": "crm_vs_books_ambiguity",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "(Decision_Maker:equals:King Sample)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 1312,
+      "prompt_tokens": 12704,
+      "completion_tokens": 40,
+      "total_tokens": 12744
+    },
+    {
+      "id": "C020",
+      "command": "Show me leads not contacts",
+      "category": "crm_module_disambiguation",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Leads"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Leads"
+        },
+        "query_params": {}
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 3104,
+      "prompt_tokens": 12701,
+      "completion_tokens": 28,
+      "total_tokens": 12729
+    },
+    {
+      "id": "C021",
+      "command": "Find Rajesh by phone 9876543210",
+      "category": "crm_contacts",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Contacts"
+        },
+        "query_params": {
+          "phone": "9876543210"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Contacts"
+        },
+        "query_params": {
+          "phone": "9876543210"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2434,
+      "prompt_tokens": 12706,
+      "completion_tokens": 35,
+      "total_tokens": 12741
+    },
+    {
+      "id": "C022",
+      "command": "Search deals not leads for Sunrise Foods",
+      "category": "crm_module_disambiguation",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "(Company:Sunrise Foods)"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2036,
+      "prompt_tokens": 12703,
+      "completion_tokens": 37,
+      "total_tokens": 12740
+    },
+    {
+      "id": "C023",
+      "command": "Get deal with record id 3935567000000070001",
+      "category": "crm_get",
+      "expected_tool": "ZohoCRM_getRecord",
+      "predicted_tool": "ZohoCRM_getRecord",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals",
+          "recordId": "3935567000000070001"
+        }
+      },
+      "args_score": 0.0,
+      "arg_mismatches": [
+        {
+          "key": "path_variables",
+          "expected": {
+            "module": "Deals"
+          },
+          "got": {
+            "module": "Deals",
+            "recordId": "3935567000000070001"
+          }
+        }
+      ],
+      "latency_ms": 3764,
+      "prompt_tokens": 12709,
+      "completion_tokens": 36,
+      "total_tokens": 12745
+    },
+    {
+      "id": "C024",
+      "command": "Search for deals closing in July 2026",
+      "category": "crm_deals",
+      "expected_tool": "ZohoCRM_searchRecords",
+      "predicted_tool": "ZohoCRM_searchRecords",
+      "tool_correct": true,
+      "schema_error": false,
+      "schema_error_msg": null,
+      "expected_args": {
+        "path_variables": {
+          "module": "Deals"
+        }
+      },
+      "predicted_args": {
+        "path_variables": {
+          "module": "Deals"
+        },
+        "query_params": {
+          "criteria": "Expected_Closing_Date|starts_within|2026-07-01|2026-07-31"
+        }
+      },
+      "args_score": 1.0,
+      "arg_mismatches": [],
+      "latency_ms": 2265,
+      "prompt_tokens": 12705,
+      "completion_tokens": 53,
+      "total_tokens": 12758
+    }
+  ]
+}

@@ -37,8 +37,14 @@ knowledge, "how to" questions, weather, exchange rates, or calculations.
 ROUTING RULES — apply when two tools could both fit:
 
 1. CRM LOOKUPS: use ZohoCRM_searchRecords for any search by name, company,
-   location, stage, or attribute. Use ZohoCRM_getRecord only when you have
-   an explicit numeric record ID in the message.
+   location, stage, attribute, phone, or email across any CRM module (Leads,
+   Contacts, Deals, Accounts, Activities, Tasks).
+   Use ZohoCRM_getRecord only when you have an explicit numeric record ID.
+   NEVER call ZohoBooks_list_contacts in response to any user-facing query.
+   ZohoBooks_list_contacts is an internal system tool for customer ID
+   resolution only — it must never be used to answer a contact search question
+   and must never be called when the user asks about contacts, customers, or
+   any business entity.
 
 2. PURCHASE ORDERS: always ZohoInventory_list_purchase_orders.
    Invoices are outbound customer bills; POs are inbound supplier documents.
@@ -55,12 +61,65 @@ ROUTING RULES — apply when two tools could both fit:
 5. SHIPMENTS vs SALES ORDERS: use ZohoInventory_get_shipment_order when the
    question mentions shipment, shipping, or dispatch.
 
-6. AGGREGATIONS: do NOT call any tool for rankings, top-N, country breakdowns,
-   or cross-record summaries — no tool supports aggregation.
+6. FILTERING vs AGGREGATION:
+   Filtering records by stage, date, or status IS a valid tool call:
+     "deals won this quarter"  → ZohoCRM_searchRecords (Deals, stage=Closed Won) ✓
+     "leads from last week"    → ZohoCRM_searchRecords (Leads, by date) ✓
+     "unpaid invoices"         → ZohoBooks_list_invoices ✓
+   These require cross-record calculation — do NOT call any tool:
+     "top 5 customers by revenue this quarter"  → no tool (ranks across records)
+     "win rate this quarter"                    → no tool (percentage)
+     "average order value"                      → no tool (arithmetic)
+     "how many deals did we close"              → no tool (count across records)
+
+7. EXTERNAL, COMPETITOR, AND GENERAL KNOWLEDGE:
+   Do not call any tool for:
+   • Competitors or external companies not in your Zoho:
+       "which countries do competitors sell to"  → no tool
+       "compare us to industry benchmarks"       → no tool
+   • Trade term explanations: "what is CIF?", "explain FOB", "how does GST work?".
+   • Any educational or concept explanation question.
+   • Exchange rates, weather, or anything not stored inside your Zoho organisation.
+
+8. WRITE OPERATIONS ON READ-ONLY TOOL LIST:
+   If the user asks to CREATE, UPDATE, or DELETE a record (create invoice,
+   send estimate, delete lead, make payment, raise a PO) and no write tool
+   appears in the tool list provided, do not call any tool. Do not call a read
+   tool as a substitute for a write operation.
+
+9. CONVERSATIONAL MESSAGES:
+   Do not call any tool for messages with no data query intent:
+   greetings, acknowledgements, filler — "okay", "got it", "thanks", "bye",
+   "I understand", "sounds good", "noted", "great". These are not Zoho queries.
 
 Do not invent IDs or values not present in the message.
 Use "organization_id" as a placeholder for the org ID — it is replaced
 automatically before the call is executed.
+
+WHEN IN DOUBT — DO NOT CALL ANY TOOL:
+If the message does not clearly map to a specific Zoho data lookup, do not
+call any tool. Examples of messages that must NOT trigger any tool call:
+
+  "Who are our top 5 customers by revenue this quarter?"
+      → no tool. Requires cross-record ranking — no tool supports this.
+
+  "Which countries do most of our export competitors sell to?"
+      → no tool. Competitors are not in Zoho; this is external market data.
+
+  "What is the capital of Saudi Arabia?"
+      → no tool. General knowledge question, not a Zoho data query.
+
+  "Thanks, that is all for now."
+      → no tool. Conversational acknowledgement with no data intent.
+
+  "Okay, got it."
+      → no tool. Conversational filler with no data intent.
+
+  "Create an invoice for Nile Trading for $5000."
+      → no tool. Write operation; no write tool in this tool list.
+
+The rule: if you cannot identify a specific Zoho module and a specific record
+or filter to retrieve, do not call any tool.
 
 CRITICAL — SCHEMA STRUCTURE: Every Zoho tool wraps its parameters under
 query_params and/or path_variables. Never generate flat top-level args.
@@ -87,6 +146,12 @@ _tool_cache:    list[dict] = []
 _tool_cache_ts: float      = 0.0
 
 
+# Tools that are internal-only and must never appear in the routing agent's schema.
+# ZohoBooks_list_contacts is called directly by identity.py for customer_id lookup —
+# it must not be selectable by the LLM for user queries.
+_AGENT_EXCLUDED_TOOLS: frozenset[str] = frozenset({"ZohoBooks_list_contacts"})
+
+
 async def _get_tools() -> list[dict]:
     """Return sanitised Groq tool schemas, refreshing from MCP when stale."""
     global _tool_cache, _tool_cache_ts
@@ -94,9 +159,12 @@ async def _get_tools() -> list[dict]:
         return _tool_cache
     async with ZohoMCPClient() as zoho:
         mcp_tools = await zoho.list_tools()
-    _tool_cache    = tools_to_groq_schema(mcp_tools)
+    all_schemas   = tools_to_groq_schema(mcp_tools)
+    _tool_cache    = [t for t in all_schemas
+                      if t["function"]["name"] not in _AGENT_EXCLUDED_TOOLS]
     _tool_cache_ts = time.time()
-    log.info("[agent] tool cache refreshed — %d tools", len(_tool_cache))
+    log.info("[agent] tool cache refreshed — %d tools (%d excluded)",
+             len(_tool_cache), len(all_schemas) - len(_tool_cache))
     return _tool_cache
 
 
