@@ -34,6 +34,7 @@ import zoho_mcp.workflow    as workflow
 import zoho_mcp.ops         as ops
 import zoho_mcp.digest      as digest
 import zoho_mcp.learning    as learning
+import zoho_mcp.lead_capture as lead_capture
 
 logging.basicConfig(
     level=logging.INFO,
@@ -57,6 +58,7 @@ async def lifespan(app: FastAPI):
     workflow.init_db()
     digest.init_db()
     learning.init_db()
+    lead_capture.init_db()
     log.info("Write action DB ready ✅")
 
     # Start background digest scheduler
@@ -449,7 +451,32 @@ async def query_endpoint(request: Request, body: QueryRequest):
                     source_chunks = 0
                     wf_handled    = True
 
-            if not wf_handled:
+            if identity.state == "unknown":
+                # Lead capture — intercepts ALL unknown callers before intent
+                lc_response, lead_created = await lead_capture.handle_unknown_caller(
+                    jid=body.sender,
+                    phone=identity.phone,
+                    message=rewritten,
+                )
+                if lead_created:
+                    from zoho_mcp.identity import _STAFF_PHONES
+                    lc_state   = lead_capture.get_state(body.sender)
+                    notify_msg = (
+                        f"📋 New WhatsApp Lead\n"
+                        f"Phone: +{identity.phone}\n"
+                        f"CRM Lead ID: {lc_state.crm_lead_id if lc_state else '?'}\n"
+                        f"First message: {rewritten[:100]}"
+                    )
+                    for phone in _STAFF_PHONES:
+                        digest.schedule_to_outbox(
+                            f"{phone}@s.whatsapp.net", notify_msg
+                        )
+                    log.info("[lead_capture] operator notified for %s", body.sender)
+                english_response = lc_response
+                route             = "lead_capture"
+                source_chunks     = 0
+
+            else:
                 # ── Step 6: Classify intent ───────────────────────────────────
                 intent = intent_classifier.classify(rewritten, history_dicts)
                 log.info(f"  [intent] {intent}")

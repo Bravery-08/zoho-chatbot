@@ -39,16 +39,6 @@ _raw_staff    = [p.strip() for p in os.getenv("STAFF_JIDS", "").split(",") if p.
 _STAFF_PHONES: set[str] = {p for p in _raw_staff if p.isdigit()}   # 917977909705
 _STAFF_JIDS:   set[str] = set(_raw_staff)                           # full JIDs too
 
-# ── Manual Books customer ID map (fallback) ───────────────────────────────────
-# Used when ZohoBooks_list_contacts authorization fails.
-# Format in .env: BOOKS_CUSTOMER_ID_MAP=King (Sample):3935567000000044076,Acme:123456
-# Find each ID: Zoho Books → Customers → click customer → read from the URL.
-_BOOKS_ID_MAP: dict[str, str] = {}
-for _entry in os.getenv("BOOKS_CUSTOMER_ID_MAP", "").split(","):
-    if ":" in _entry:
-        _name, _bid = _entry.split(":", 1)
-        _BOOKS_ID_MAP[_name.strip()] = _bid.strip()
-
 # ── Identity cache ────────────────────────────────────────────────────────────
 _CACHE_TTL: int = int(os.getenv("IDENTITY_CACHE_TTL", "3600"))   # seconds
 _cache: dict[str, tuple["CustomerIdentity", float]] = {}
@@ -149,12 +139,6 @@ async def _books_lookup_customer_id(account_name: str) -> Optional[str]:
     from zoho_mcp.config import ZOHO_ORG_ID
     if not account_name:
         return None
-
-    # 1. Manual map — instant fallback, no API call
-    if account_name in _BOOKS_ID_MAP:
-        cid = _BOOKS_ID_MAP[account_name]
-        log.info("[identity] Books customer_id=%s via manual map for '%s'", cid, account_name)
-        return cid
 
     # 2. Live API lookup via ZohoBooks_list_contacts
     if not ZOHO_ORG_ID:

@@ -87,9 +87,9 @@ async def gather_tools(schema_file: str | None) -> list[dict]:
     async with ZohoMCPClient() as zoho:
         mcp_tools = await zoho.list_tools()
     log.info("Fetched %d tools live from Zoho MCP", len(mcp_tools))
-    _EXCLUDED = frozenset({"ZohoBooks_list_contacts"})
+    _EXCLUDED = frozenset({"ZohoBooks_list_contacts", "ZohoCRM_createRecords"})
     return [t for t in tools_to_groq_schema(mcp_tools)
-            if t["function"]["name"] not in _EXCLUDED]
+        if t["function"]["name"] not in _EXCLUDED]
 
 
 # ── Scoring ───────────────────────────────────────────────────────────────────

@@ -34,6 +34,7 @@ log = logging.getLogger(__name__)
 # ── Tool risk classification (verified tool names) ────────────────────────────
 LOW_RISK_TOOLS: frozenset[str] = frozenset({
     "ZohoCRM_createRecords",     # Create a CRM Lead / Contact
+    "ZohoCRM_updateRecord",
     "ZohoBooks_create_estimate", # Create a draft estimate (NOT sent)
 })
 HIGH_RISK_TOOLS: frozenset[str] = frozenset({
@@ -93,6 +94,11 @@ def _proposal_system(identity: CustomerIdentity) -> str:
     account = identity.account_name or "the customer"
     contact = identity.contact_name or "the customer"
     has_books_id = bool(identity.books_customer_id)
+    books_note   = (
+        "NOTE: The Books customer_id is available for this customer."
+        if has_books_id else
+        "NOTE: Books customer_id is not yet resolved. Only ZohoCRM_createRecords is available."
+    )
     return f"""
 You are a write agent for a B2B merchant-export company.
 The authenticated user is {contact} from {account}.
@@ -131,14 +137,25 @@ SALES ORDER RULES (ZohoBooks_create_sales_order):
   - body.customer_id is REQUIRED.
   - body.line_items is strongly recommended.
   - This is HIGH RISK and will require human approval.
+  
+CRM UPDATE RULES (ZohoCRM_updateRecord):
+  - path_variables.module: Leads | Contacts | Deals | Accounts
+  - path_variables.id: use "record_id" as placeholder
+  - body.data: ONE object with:
+      "_search_name": name to search for (resolves to record ID)
+      + the fields to update
+  - Lead_Status values: "New" | "Contacted" | "Qualified" |
+    "Lost Lead" | "Not Contacted" | "Pre-Qualified"
+  - Example: {{"path_variables": {{"module": "Leads", "id": "record_id"}},
+               "body": {{"data": [{{"_search_name": "Rajesh Kumar",
+                                  "Lead_Status": "Qualified"}}]}}}}
 
 CRM LEAD RULES (ZohoCRM_createRecords):
   - path_variables.module must be "Leads".
   - body.data must be an array: [{{"Last_Name":"...", "Company":"...", "Phone":"..."}}]
   - Use the customer's details from the conversation.
 
-{"NOTE: The Books customer_id is available for this customer." if has_books_id else
- "NOTE: Books customer_id is not yet resolved. Only ZohoCRM_createRecords is available."}
+{books_note}
 
 proposal_text must be 1-2 friendly sentences summarising what will happen.
 If no write tool fits, output: {{"tool_name": null, "tool_args": {{}}, "proposal_text": ""}}
@@ -225,6 +242,24 @@ async def generate_proposal(
             tool_name, identity.account_name,
         )
         return None
+    
+    # Phase B: resolve CRM record ID before generating proposal
+    if tool_name == "ZohoCRM_updateRecord":
+        import copy
+        tool_args = copy.deepcopy(tool_args)
+        pv        = tool_args.setdefault("path_variables", {})
+        module    = pv.get("module", "Leads")
+        data      = tool_args.get("body", {}).get("data", [{}])
+        fields    = data[0] if data else {}
+        search_name = fields.pop("_search_name", "")
+        if not search_name:
+            log.warning("[write_agent] updateRecord missing _search_name")
+            return None
+        record_id = await _resolve_crm_record_id(module, search_name)
+        if not record_id:
+            log.warning("[write_agent] could not find %s '%s'", module, search_name)
+            return None
+        pv["id"] = record_id
 
     log.info("[write_agent] proposal: tool=%s risk=%s", tool_name, risk)
     return tool_name, proposal_text, tool_args, risk
@@ -247,6 +282,23 @@ def _inject_placeholder(args: dict, key: str, value: str) -> dict:
             return [_walk(i) for i in obj]
         return obj
     return _walk(args)
+
+async def _resolve_crm_record_id(module: str, name: str) -> Optional[str]:
+    """Search CRM read server for a record by name, return its ID."""
+    try:
+        async with ZohoMCPClient() as zoho:
+            result = await zoho.call_tool("ZohoCRM_searchRecords", {
+                "path_variables": {"module": module},
+                "query_params":   {"word": name},
+            })
+        data    = json.loads(result_to_text(result))
+        records = data.get("data", [])
+        if records:
+            log.info("[write_agent] resolved %s '%s' → %s", module, name, records[0]["id"])
+            return records[0]["id"]
+    except Exception as exc:
+        log.warning("[write_agent] CRM lookup failed: %s", exc)
+    return None
 
 
 # ── Execution ─────────────────────────────────────────────────────────────────

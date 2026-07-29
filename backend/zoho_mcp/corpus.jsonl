@@ -98,6 +98,9 @@
 {"id": "C022", "command": "Search deals not leads for Sunrise Foods", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {"path_variables": {"module": "Deals"}}, "category": "crm_module_disambiguation"}
 {"id": "C023", "command": "Get deal with record id 3935567000000070001", "expected_tool": "ZohoCRM_getRecord", "expected_args": {"path_variables": {"module": "Deals"}}, "category": "crm_get"}
 {"id": "C024", "command": "Search for deals closing in July 2026", "expected_tool": "ZohoCRM_searchRecords", "expected_args": {"path_variables": {"module": "Deals"}}, "category": "crm_deals"}
+{"id": "B001", "command": "Create a new lead for Rajesh Kumar from Sunrise Foods", "expected_tool": null, "category": "negative_write_on_read"}
+{"id": "B002", "command": "Mark lead Priya Sharma as qualified", "expected_tool": null, "category": "negative_write_on_read"}
+{"id": "B003", "command": "Update the deal stage for King Sample to negotiation", "expected_tool": null, "category": "negative_write_on_read"}
 // {"id": "C025", "command": "Create a lead for Rajesh Kumar from Sunrise Foods interested in basmati rice", "expected_tool": "ZohoCRM_createRecords", "expected_args": {"path_variables": {"module": "Leads"}}, "category": "crm_write_leads"}
 // {"id": "C026", "command": "Add new lead — Priya Sharma, priya@agro.com, wants bulk spices", "expected_tool": "ZohoCRM_createRecords", "expected_args": {"path_variables": {"module": "Leads"}}, "category": "crm_write_leads"}
 // {"id": "C027", "command": "Mark lead Rajesh Kumar as qualified", "expected_tool": "ZohoCRM_updateRecord", "expected_args": {"path_variables": {"module": "Leads"}}, "category": "crm_write_leads"}

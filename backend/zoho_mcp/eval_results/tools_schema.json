@@ -9,17 +9,17 @@
           "properties": {
             "module": {
               "description": "The API name of the module to perform the operation on. System-defined modules include Leads, Accounts, Contacts, Deals, Campaigns, Tasks, Cases, Meetings, Calls, Solutions, Products, Vendors, Price_Books, Quotes, Sales_Orders, Purchase_Orders, Invoices, Appointments, Appointments_Rescheduled_History, and Services. Custom modules created in your CRM organization are also supported. Use the module's API name (e.g., Leads, Price_Books).",
-              "maxLength": 100,
+              "maxLength": 25,
               "type": "string"
             },
-            "recordID": {
+            "recordId": {
               "description": "This ID is used to uniquely identify a record",
               "format": "int64",
               "type": "string"
             }
           },
           "required": [
-            "recordID",
+            "recordId",
             "module"
           ],
           "type": "object"
@@ -32,7 +32,7 @@
   },
   {
     "name": "ZohoCRM_searchRecords",
-    "description": "Searches records matching your criteria within a CRM module. Supports criteria queries, email/phone/word searches. At least one search parameter required. Max 2,000 records, 15 criteria conditions. Newly created records may have indexing delays.",
+    "description": "Searches records matching your criteria within a CRM module. Supports criteria queries, email/phone/word searches. At least one search parameter required. Max 2,000 records, 15 criteria conditions. Newly created records may have indexing delays.\n\nUse this tool when you want to search records matching for the given criteria in param within single module in CRM",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -100,6 +100,11 @@
               "maxLength": 2000,
               "type": "string"
             },
+            "include_lite_users": {
+              "default": false,
+              "description": "Indicates whether lite users should be included in the search results.",
+              "type": "boolean"
+            },
             "page": {
               "default": 1,
               "description": "The page number to retrieve for paginated results. Use in combination with per_page to navigate through large result sets.",
@@ -119,6 +124,12 @@
               "description": "Search records by phone number across all phone fields in the module. Supports various phone number formats including international, national, and partial numbers.\n*Mandatory if criteria, email, and word are not present.*",
               "maxLength": 50,
               "minLength": 3,
+              "type": "string"
+            },
+            "role_id": {
+              "description": "Filter users by role ID. This parameter is supported only for the Users module.",
+              "format": "int64",
+              "maxLength": 20,
               "type": "string"
             },
             "sort_by": {
@@ -351,14 +362,14 @@
   },
   {
     "name": "ZohoBooks_get_customer_balances_report",
-    "description": "Customer balance listing for receivables. entity_type=\"customer_balances\"; MUST call get_reports_metadata with arguments {\"parameters\":{\"entity_type\":\"customer_balances\",\"organization_id\":\"<org_id>\"}} before report execution.",
+    "description": "Customer balance listing for receivables. entity_type is customer_balances for this report. Call GET /reports/metadata with that entity_type before this report.Customer balance listing for receivables. entity_type=\"customer_balances\"; MUST call get_reports_metadata with arguments {\"parameters\":{\"entity_type\":\"customer_balances\",\"organization_id\":\"<org_id>\"}} before report execution.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "query_params": {
           "properties": {
             "accept": {
-              "description": "Omit accept for standard JSON (default); do not send accept=json for routine calls - it is redundant with omitting the parameter. Use accept only for export or download: pdf, xls, xlsx, csv, xml, html, jhtml, enc, txt, zip.",
+              "description": "Export or non-JSON response format for the report. Omit this parameter for normal requests - the API returns JSON by default. The value `json` is allowed if set explicitly but is redundant. Send `accept` only when you need a file export or alternate representation (for example pdf, xls, xlsx, csv, xml, html, txt, or zip).\n",
               "enum": [
                 "json",
                 "xml",
@@ -424,7 +435,7 @@
               "type": "string"
             },
             "filter_by": {
-              "description": "Filter for the report based on period.",
+              "description": "Filter for the report based on period. ",
               "enum": [
                 "TransactionDate.Today",
                 "TransactionDate.ThisWeek",
@@ -449,7 +460,7 @@
               "type": "string"
             },
             "group_by": {
-              "description": "Array of objects defining grouping. Each object must have: - field: must match 'field' in entity_fields - group: must match 'group' in entity_fields Only fields with 'is_group_by = true' are allowed. Example snippet: {\"field\":\"account_code\",\"group\":\"report\"}",
+              "description": "Array of objects defining grouping. Each object must have:\n- field: must match 'field' in entity_fields\n- group: must match 'group' in entity_fields\nOnly fields with 'is_group_by = true' are allowed.\nExample snippet: {\"field\":\"account_code\",\"group\":\"report\"}",
               "type": "string"
             },
             "group_level_page_break": {
@@ -481,27 +492,27 @@
               "type": "string"
             },
             "margin_bottom": {
-              "description": "Bottom margin for the report.",
+              "description": "Bottom margin for the report. ",
               "type": "string"
             },
             "margin_left": {
-              "description": "Left margin for the report.",
+              "description": "Left margin for the report. ",
               "type": "string"
             },
             "margin_right": {
-              "description": "Right margin for the report.",
+              "description": "Right margin for the report. ",
               "type": "string"
             },
             "margin_top": {
-              "description": "Top margin for the report.",
+              "description": "Top margin for the report. ",
               "type": "string"
             },
             "name_in_pdf": {
-              "description": "Name to display in PDF.",
+              "description": "Name to display in PDF. ",
               "type": "string"
             },
             "no_of_days": {
-              "description": "Number of days to include in the report.",
+              "description": "Number of days to include in the report. ",
               "type": "string"
             },
             "optional_columns": {
@@ -509,7 +520,7 @@
               "type": "string"
             },
             "org_profile_placeholder": {
-              "description": "Placeholder for organization profile.",
+              "description": "Placeholder for organization profile. ",
               "type": "string"
             },
             "organization_id": {
@@ -546,7 +557,7 @@
               "type": "string"
             },
             "password": {
-              "description": "Password for secured report.",
+              "description": "Password for secured report. ",
               "type": "string"
             },
             "per_page": {
@@ -629,7 +640,7 @@
               "type": "object"
             },
             "select_columns": {
-              "description": "Array of objects defining report columns. Each object must have: - field: must match 'field' in 'entity_fields' from the GET /reports/metadata response for this entity_type - group: must match 'group' in 'entity_fields' Only fields with 'is_select_column = true' are allowed. If a field has 'multiple_values = true' and non-empty 'percentage_base_rows', include them. Example snippet: {\"field\":\"name\",\"group\":\"report\"}",
+              "description": "Array of objects defining report columns. Each object must have:\n- field: must match 'field' in 'entity_fields' from the GET /reports/metadata response for this entity_type\n- group: must match 'group' in 'entity_fields'\nOnly fields with 'is_select_column = true' are allowed.\nIf a field has 'multiple_values = true' and non-empty 'percentage_base_rows', include them.\nExample snippet: {\"field\":\"name\",\"group\":\"report\"}",
               "items": {
                 "properties": {
                   "field": {
@@ -701,7 +712,7 @@
               "type": "string"
             },
             "show_in": {
-              "description": "Amount display scale: thousands, lakhs, crores, millions, billions, or trillions.",
+              "description": "Scale for displaying amounts (thousands, lakhs, etc.).",
               "enum": [
                 "thousands",
                 "lakhs",
@@ -749,7 +760,7 @@
               "type": "string"
             },
             "sort_column": {
-              "description": "Field name to sort by. Must match 'field' in entity_fields from the GET /reports/metadata response for this entity_type. Only fields with 'is_sortable = true' are allowed. Example: 'account_code'",
+              "description": "Field name to sort by. Must match 'field' in entity_fields from the GET /reports/metadata response for this entity_type.\nOnly fields with 'is_sortable = true' are allowed.\nExample: 'account_code'",
               "enum": [
                 "customer_name",
                 "invoice_balance",
@@ -788,7 +799,7 @@
               "type": "string"
             },
             "table_style": {
-              "description": "Table style preset: alternative_rows, bordered, alternative_columns, or default.",
+              "description": "Table style preset for the report layout.",
               "enum": [
                 "alternative_rows",
                 "bordered",
@@ -798,12 +809,12 @@
               "type": "string"
             },
             "to_date": {
-              "description": "End date for the report in yyyy-MM-dd form.",
+              "description": "End date for the report (yyyy-MM-dd).",
               "type": "string"
             },
             "usestate": {
               "default": "false",
-              "description": "Always pass the string `false` only - never `true` - for report endpoints. Matches Books report URLs; `true` is invalid for these operations and causes tool/MCP failures.",
+              "description": "Query string literal `false` only (not a JSON boolean). Zoho Books report requests use `usestate=false` for the usual stateless response shape, consistent with the product UI.",
               "enum": [
                 "false"
               ],
@@ -814,15 +825,15 @@
               "type": "string"
             },
             "watermark_opacity": {
-              "description": "Watermark opacity; send 0-100 as a string in the query string.",
+              "description": "Watermark opacity as a whole number from 0 through 100.",
               "type": "string"
             },
             "watermark_position": {
-              "description": "Watermark position text; lowercase letters and spaces only.",
+              "description": "Watermark position label using lowercase letters and spaces only.",
               "type": "string"
             },
             "watermark_zoom": {
-              "description": "Watermark zoom; send 0-200 as a string in the query string.",
+              "description": "Watermark zoom level as a whole number from 0 through 200.",
               "type": "string"
             }
           },
@@ -846,7 +857,15 @@
         "query_params": {
           "properties": {
             "custom_field": {
-              "description": "Search estimates by custom field.Variants<code>custom_field_startswith</code> and <code>custom_field_contains</code>",
+              "description": "Search estimates by custom fields.Variants: <code>custom_field_startswith</code> and <code>custom_field_contains</code>",
+              "type": "string"
+            },
+            "custom_field_contains": {
+              "description": "Search estimates where custom field value contains the given value.",
+              "type": "string"
+            },
+            "custom_field_startswith": {
+              "description": "Search estimates where custom field value starts with the given value.",
               "type": "string"
             },
             "customer_id": {
@@ -854,35 +873,43 @@
               "type": "string"
             },
             "customer_name": {
-              "description": "Filter or search estimates by the customer's name. Supports variants such as <code>customer_name_startswith</code> and <code>customer_name_contains</code> for partial matches. Useful for quickly locating all estimates associated with a specific customer or group of customers with similar names.",
+              "description": "Search estimates by customer name. Filters estimates based on the business or individual name associated with the estimate. Maximum length is 100 characters. Useful for finding all estimates for a specific customer or generating customer reports.",
               "type": "string"
             },
             "date": {
-              "description": "Search estimates by estimate date.Variants <code>date_start</code>, <code>date_end</code>, <code>date_before</code> and <code>date_after</code>",
+              "description": "Search estimates by estimate date. Filters estimates based on the date they were created. Use yyyy-mm-dd format. Supports variants: <code>date_start</code>, <code>date_end</code>, <code>date_before</code> and <code>date_after</code>. Useful for finding estimates within date ranges or specific time periods.",
               "type": "string"
             },
             "date_after": {
-              "description": "Filter estimates with an estimate date strictly after the specified date (exclusive). Use yyyy-mm-dd format.",
+              "description": "Filter estimates with estimate date after this value. Use yyyy-mm-dd format.",
               "format": "date",
               "type": "string"
             },
             "date_before": {
-              "description": "Filter estimates with an estimate date strictly before the specified date (exclusive). Use yyyy-mm-dd format.",
+              "description": "Filter estimates with estimate date before this value. Use yyyy-mm-dd format.",
               "format": "date",
               "type": "string"
             },
             "date_end": {
-              "description": "Filter estimates with an estimate date on or before the specified date. Useful for defining the end of a date range. Use yyyy-mm-dd format.",
+              "description": "Filter estimates with estimate date on or before this value. Use yyyy-mm-dd format.",
               "format": "date",
               "type": "string"
             },
             "date_start": {
-              "description": "Filter estimates with an estimate date on or after the specified date. Useful for defining the start of a date range. Use yyyy-mm-dd format.",
+              "description": "Filter estimates with estimate date on or after this value. Use yyyy-mm-dd format.",
               "format": "date",
               "type": "string"
             },
             "estimate_number": {
               "description": "Filter or search estimates by their unique estimate number. Supports variants such as <code>estimate_number_startswith</code> and <code>estimate_number_contains</code> for partial matches. Useful for quickly locating a specific estimate or a group of estimates with similar numbering.",
+              "type": "string"
+            },
+            "estimate_number_contains": {
+              "description": "Search estimates where estimate number contains the given value. Maximum length is 100 characters.",
+              "type": "string"
+            },
+            "estimate_number_startswith": {
+              "description": "Search estimates where estimate number starts with the given value. Maximum length is 100 characters.",
               "type": "string"
             },
             "expiry_date": {
@@ -911,18 +938,63 @@
             },
             "filter_by": {
               "description": "Filter estimates by status.Allowed Values <code>Status.All</code>, <code>Status.Sent</code>, <code>Status.Draft</code>, <code>Status.Invoiced</code>, <code>Status.Accepted</code>, <code>Status.Declined</code> and <code>Status.Expired</code>",
+              "enum": [
+                "Status.All",
+                "Status.Sent",
+                "Status.Pending",
+                "Status.Approved",
+                "Status.Draft",
+                "Status.Invoiced",
+                "Status.Accepted",
+                "Status.Declined",
+                "Status.Expired",
+                "Status.Viewed",
+                "Status.AvalaraSyncFailed",
+                "Status.TaxAutomationFailed",
+                "Status.MyApprovals",
+                "WithAttachment",
+                "WithoutAttachment",
+                "ExceptionList",
+                "EmailScheduled",
+                "Type.NewSubscription",
+                "Type.Invoice"
+              ],
               "type": "string"
             },
             "item_description": {
-              "description": "Search estimates by item description.Variants<code>item_description_startswith</code> and <code>item_description_contains</code>",
+              "description": "Search estimates by item description. Filters estimates based on detailed descriptions of products or services in line items. Supports <code>item_description_startswith</code> and <code>item_description_contains</code> variants. Maximum length is 100 characters. Useful for finding estimates with specific item descriptions or technical specifications.",
+              "type": "string"
+            },
+            "item_description_contains": {
+              "description": "Search estimates where item description contains the given value. Maximum length is 100 characters.",
+              "type": "string"
+            },
+            "item_description_startswith": {
+              "description": "Search estimates where item description starts with the given value. Maximum length is 100 characters.",
               "type": "string"
             },
             "item_id": {
-              "description": "Filter or search estimates by the unique item ID. Use the <code>item_id</code> returned by the Items API for the same organization. This allows you to find all estimates that include a specific product or service. Note: This value is a set of numeric characters.",
+              "description": "Search estimates by item ID. Filters estimates based on the unique identifier of specific products or services in line items. Use the GET `/items` API to find available item IDs. Useful for finding all estimates containing a specific product or service. Note: This value is a set of numeric characters.",
               "type": "string"
             },
             "item_name": {
-              "description": "Search estimates by item name.Variants <code>item_name_startswith</code> and <code>item_name_contains</code>",
+              "description": "Search estimates by item name. Filters estimates based on product or service names in estimate line items. Supports <code>item_name_startswith</code> and <code>item_name_contains</code> variants. Maximum length is 100 characters. Useful for finding estimates with specific products or services.",
+              "type": "string"
+            },
+            "item_name_contains": {
+              "description": "Search estimates where item name contains the given value. Maximum length is 100 characters.",
+              "type": "string"
+            },
+            "item_name_startswith": {
+              "description": "Search estimates where item name starts with the given value. Maximum length is 100 characters.",
+              "type": "string"
+            },
+            "last_modified_time": {
+              "description": "Search estimates modified after a specific time. Filters estimates based on their last modification timestamp. Use YYYY-MM-DDTHH:MM:SS-UTC format. Useful for finding recently updated estimates or syncing data changes. Example : 2023-11-18T02:02:51-0800, 2025-19-19T02:02:51%2B0800",
+              "type": "string"
+            },
+            "location_ids": {
+              "description": "List of location IDs to filter estimates by their associated locations. Use this parameter to retrieve estimates linked to specific business locations. Note: This value is a comma-separated list of numeric location IDs.",
               "type": "string"
             },
             "organization_id": {
@@ -931,7 +1003,7 @@
             },
             "page": {
               "default": 1,
-              "description": "Page number to be fetched. Default value is 1.",
+              "description": "Page number to be fetched from the paginated results. Default value is 1. Use this parameter along with per_page to navigate through large sets of estimate data. Useful for implementing pagination in your application.",
               "type": "integer"
             },
             "per_page": {
@@ -940,7 +1012,7 @@
               "type": "integer"
             },
             "reference_number": {
-              "description": "Filter or search estimates by their reference number. Supports variants such as <code>reference_number_startswith</code> and <code>reference_number_contains</code> for partial matches. Useful for linking estimates to external systems, customer requests, or internal workflows.",
+              "description": "Search estimates by reference number. Filters estimates based on external reference identifiers like purchase order numbers, contract numbers, or project codes. Useful for finding estimates associated with specific projects or business transactions.",
               "type": "string"
             },
             "search_text": {
@@ -949,16 +1021,47 @@
             },
             "sort_column": {
               "description": "Sort estimates. Allowed Values <code>customer_name</code>, <code>estimate_number</code>, <code>date</code>, <code>total</code> and <code>created_time</code>",
+              "enum": [
+                "customer_name",
+                "estimate_number",
+                "date",
+                "total",
+                "created_time",
+                "last_modified_time",
+                "cf_(\\w+)"
+              ],
               "type": "string"
             },
             "status": {
               "description": "Search estimates by status.Allowed Values<code>draft</code>, <code>sent</code>,<code> invoiced </code>, <code>accepted</code>, <code>declined</code> and <code>expired</code>",
+              "enum": [
+                "draft",
+                "pending_approval",
+                "approved",
+                "sent",
+                "invoiced",
+                "accepted",
+                "declined",
+                "expired",
+                "viewed",
+                "signed",
+                "rejected",
+                "partially_invoiced",
+                "pending_signature"
+              ],
               "type": "string"
             },
             "total": {
-              "description": "Filter or search estimates by the total amount of the estimate. Supports variants such as <code>total_less_than</code>, <code>total_less_equals</code>, <code>total_greater_than</code>, and <code>total_greater_equals</code> for range-based queries. Useful for finding estimates within a specific budget or identifying high-value quotes.",
-              "format": "double",
-              "type": "number"
+              "description": "Search estimates by total amount. Filters estimates based on the final estimate amount including taxes, discounts, and adjustments. Useful for finding estimates within specific price ranges or identifying high-value transactions.",
+              "type": "string"
+            },
+            "total_end": {
+              "description": "Filter estimates with total amount less than or equal to this value.",
+              "type": "string"
+            },
+            "total_start": {
+              "description": "Filter estimates with total amount greater than or equal to this value.",
+              "type": "string"
             },
             "zcrm_potential_id": {
               "description": "Potential ID of a Deal in CRM. Note: This value is a set of numeric characters.",
@@ -988,6 +1091,20 @@
               "description": "Get the details of a particular sales order in formats such as json/ pdf/ html. Default format is json. Allowed Values: <code>json</code>, <code>csv</code> , <code>xml</code>, <code>xls</code>, <code>xlsx</code>, <code>pdf</code>, <code>jhtml</code> and <code>html</code>.",
               "type": "string"
             },
+            "created_date": {
+              "description": "Search sales orders by creation date. Filters sales orders based on the date they were created. Use yyyy-mm-dd format. Supports variants: <code>created_date_start</code>, <code>created_date_end</code>. Useful for finding sales orders created within specific time periods or date ranges.",
+              "type": "string"
+            },
+            "created_date_end": {
+              "description": "Filter sales orders with creation date on or before this value. Use yyyy-mm-dd format.",
+              "format": "date",
+              "type": "string"
+            },
+            "created_date_start": {
+              "description": "Filter sales orders with creation date on or after this value. Use yyyy-mm-dd format.",
+              "format": "date",
+              "type": "string"
+            },
             "customer_id": {
               "description": "Filter sales orders by specific customer identifier. Retrieves all sales orders associated with a particular customer account for customer relationship management, order history tracking, and customer-specific reporting and analysis purposes. Note: This value is a set of numeric characters.",
               "type": "string"
@@ -1001,27 +1118,31 @@
               "type": "string"
             },
             "date": {
-              "description": "Filter sales orders by creation date using various date range operators. Available variants include <code>date_start</code>, <code>date_end</code>, <code>date_before</code>, and <code>date_after</code>. Default date format: <code>yyyy-mm-dd</code>.",
+              "description": "Search sales orders by sales order date. Filters sales orders based on the date they were created. Use yyyy-mm-dd format. Supports variants: <code>date_start</code>, <code>date_end</code>, <code>date_before</code> and <code>date_after</code>. Useful for finding sales orders within date ranges or specific time periods.",
               "type": "string"
             },
             "date_after": {
-              "description": "Filter sales orders with creation date strictly after the specified date (exclusive). Use yyyy-mm-dd format.",
+              "description": "Filter sales orders with sales order date after this value. Use yyyy-mm-dd format.",
               "format": "date",
               "type": "string"
             },
             "date_before": {
-              "description": "Filter sales orders with creation date strictly before the specified date (exclusive). Use yyyy-mm-dd format.",
+              "description": "Filter sales orders with sales order date before this value. Use yyyy-mm-dd format.",
               "format": "date",
               "type": "string"
             },
             "date_end": {
-              "description": "Filter sales orders with creation date on or before the specified date. Useful for defining the end of a date range. Use yyyy-mm-dd format.",
+              "description": "Filter sales orders with sales order date on or before this value. Use yyyy-mm-dd format.",
               "format": "date",
               "type": "string"
             },
             "date_start": {
-              "description": "Filter sales orders with creation date on or after the specified date. Useful for defining the start of a date range. Use yyyy-mm-dd format.",
+              "description": "Filter sales orders with sales order date on or after this value. Use yyyy-mm-dd format.",
               "format": "date",
+              "type": "string"
+            },
+            "email": {
+              "description": "Search sales orders by customer email address. Filters sales orders based on the email address of the customer or contact person. Maximum length is 100 characters. Useful for finding sales orders for specific customers or generating customer segment reports.",
               "type": "string"
             },
             "expiry_date_after": {
@@ -1046,10 +1167,70 @@
             },
             "filter_by": {
               "description": "Filter sales order by status. Allowed Values: <code>Status.All</code>, <code>Status.Open</code>, <code>Status.Draft</code>, <code>Status.OverDue</code>, <code>Status.PartiallyInvoiced</code>, <code>Status.Invoiced</code>, <code>Status.Void</code> and <code>Status.Closed</code>",
+              "enum": [
+                "Status.All",
+                "Status.Draft",
+                "Status.Open",
+                "Status.Invoiced",
+                "Status.InvoicedNotShipped",
+                "Status.Confirmed",
+                "Status.UnFulfilled",
+                "Status.MarketPlaceSalesOrder",
+                "Status.ThisCycle",
+                "Status.PreviousCycle",
+                "Status.PartiallyInvoiced",
+                "Status.Void",
+                "Status.Closed",
+                "Status.Pending",
+                "Status.Approved",
+                "Status.OverDue",
+                "Status.Shipped",
+                "Status.ShippedNotInvoiced",
+                "Status.ToBeShipped",
+                "Status.ToBeInvoiced",
+                "Status.Fulfilled",
+                "Status.ManuallyFulfilled",
+                "Status.BackOrdered",
+                "Status.OnHold",
+                "Status.DropShipped",
+                "Status.ToBePacked",
+                "Status.AvalaraSyncFailed",
+                "Status.TaxAutomationFailed",
+                "Status.Network",
+                "Status.NetworkPending",
+                "Status.MyApprovals",
+                "Status.Unconfirmed",
+                "Status.Portal",
+                "Status.Cancelled",
+                "Status.NotConfirmed",
+                "Status.PendingOrders",
+                "Status.ShippedNotCancelledOrFailed",
+                "Status.Delivered",
+                "Status.CancelledOrFailed",
+                "Status.Viewed",
+                "Status.BBPSPendingApproval",
+                "Status.BBPSAccepted",
+                "Status.BBPSAcceptFailed",
+                "Status.BBPSRejected",
+                "Status.BBPSRejectFailed",
+                "Status.BBPSReturned",
+                "Status.BBPSReturnFailed",
+                "WithAttachment",
+                "WithoutAttachment",
+                "ExceptionList"
+              ],
               "type": "string"
             },
             "item_description": {
-              "description": "Filter sales orders by line item description text using various matching operators. Available variants include <code>item_description_startswith</code>, <code>item_description_not_in</code>, <code>item_description_in</code>, and <code>item_description_contains</code>. Maximum search length: 100 characters.",
+              "description": "Search sales orders by item description. Filters sales orders based on detailed descriptions of products or services in line items. Supports <code>item_description_startswith</code> and <code>item_description_contains</code> variants. Maximum length is 100 characters. Useful for finding sales orders with specific item descriptions or technical specifications.",
+              "type": "string"
+            },
+            "item_description_contains": {
+              "description": "Search sales orders where item description contains the given value. Maximum length is 100 characters.",
+              "type": "string"
+            },
+            "item_description_startswith": {
+              "description": "Search sales orders where item description starts with the given value. Maximum length is 100 characters.",
               "type": "string"
             },
             "item_id": {
@@ -1057,11 +1238,23 @@
               "type": "string"
             },
             "item_name": {
-              "description": "Filter sales orders by line item name using various matching operators. Available variants include <code>item_name_startswith</code>, <code>item_name_not_in</code>, <code>item_name_in</code>, and <code>item_name_contains</code>. Maximum search length: 100 characters.",
+              "description": "Search sales orders by item name. Filters sales orders based on product or service names in sales order line items. Supports <code>item_name_startswith</code> and <code>item_name_contains</code> variants. Maximum length is 100 characters. Useful for finding sales orders with specific products or services.",
+              "type": "string"
+            },
+            "item_name_contains": {
+              "description": "Search sales orders where item name contains the given value. Maximum length is 100 characters.",
+              "type": "string"
+            },
+            "item_name_startswith": {
+              "description": "Search sales orders where item name starts with the given value. Maximum length is 100 characters.",
               "type": "string"
             },
             "last_modified_time": {
               "description": "Last Modified time of the Sales Order",
+              "type": "string"
+            },
+            "location_ids": {
+              "description": "List of location IDs to filter sales orders by their associated locations. Use this parameter to retrieve sales orders linked to specific business locations. Note: This value is a comma-separated list of numeric location IDs.",
               "type": "string"
             },
             "organization_id": {
@@ -1094,6 +1287,14 @@
               "description": "Filter sales orders by sales order number using various matching operators. Available variants include <code>salesorder_number_startswith</code>, <code>salesorder_number_not_in</code>, <code>salesorder_number_in</code>, and <code>salesorder_number_contains</code>. Maximum search length: 100 characters.",
               "type": "string"
             },
+            "salesorder_number_contains": {
+              "description": "Search sales orders where sales order number contains the given value. Maximum length is 100 characters.",
+              "type": "string"
+            },
+            "salesorder_number_startswith": {
+              "description": "Search sales orders where sales order number starts with the given value. Maximum length is 100 characters.",
+              "type": "string"
+            },
             "salesperson_id": {
               "description": "Filter sales orders by specific sales representative identifier. Retrieves all sales orders assigned to a particular salesperson for performance tracking, commission calculations, sales territory management, and individual sales reporting purposes. Note: This value is a set of numeric characters.",
               "type": "string"
@@ -1108,19 +1309,154 @@
             },
             "sort_column": {
               "description": "Specify the column field for sorting sales order results. Available options include <code>customer_name</code>, <code>salesorder_number</code>, <code>shipment_date</code>, <code>last_modified_time</code>, <code>reference_number</code>, <code>total</code>, <code>date</code>, and <code>created_time</code>.",
+              "enum": [
+                "customer_name",
+                "salesorder_number",
+                "reference_number",
+                "shipment_date",
+                "total",
+                "date",
+                "created_time",
+                "last_modified_time",
+                "subscription_number",
+                "first_name",
+                "company_name",
+                "cf_(\\w+)"
+              ],
               "type": "string"
             },
             "status": {
               "description": "Search sales order by sales order status. Allowed Values: <code>draft</code>, <code>open</code>, <code>invoiced</code>, <code>partially_invoiced</code>, <code>void</code> and <code>overdue</code>.",
+              "enum": [
+                "draft",
+                "pending_approval",
+                "approved",
+                "open",
+                "invoiced",
+                "invoiced_not_shipped",
+                "shipped_not_invoiced",
+                "partially_invoiced",
+                "not_invoiced",
+                "to_be_invoiced",
+                "paid",
+                "partially_paid",
+                "unpaid",
+                "cancelled",
+                "void",
+                "pending",
+                "overdue",
+                "closed",
+                "confirmed",
+                "onhold",
+                "network_pending_approval",
+                "rejected"
+              ],
               "type": "string"
             },
             "total": {
-              "description": "Filter sales orders by total amount using various range operators. Available variants include <code>total_start</code>, <code>total_end</code>, <code>total_less_than</code>, <code>total_less_equals</code>, <code>total_greater_than</code>, and <code>total_greater_equals</code>.",
-              "format": "double",
-              "type": "number"
+              "description": "Search sales orders by total amount. Filters sales orders based on the final sales order amount including taxes, discounts, and adjustments. Useful for finding sales orders within specific price ranges or identifying high-value transactions.",
+              "type": "string"
+            },
+            "total_end": {
+              "description": "Filter sales orders with total amount less than or equal to this value.",
+              "type": "string"
+            },
+            "total_start": {
+              "description": "Filter sales orders with total amount greater than or equal to this value.",
+              "type": "string"
             },
             "zcrm_potential_id": {
               "description": "Unique identifier of the potential in CRM. Note: This value is a set of numeric characters.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "organization_id"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "query_params"
+      ]
+    }
+  },
+  {
+    "name": "ZohoBooks_list_contacts",
+    "description": "Retrieve a comprehensive list of all contacts with advanced filters. This operation supports multiple search criteria including contact name, company name, address, email, phone, and general text search. You can filter contacts by status (active, inactive, duplicate, CRM) and sort by various fields. The response includes essential contact information, financial data including outstanding amounts and credit limits, and pagination details for efficient data retrieval.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query_params": {
+          "properties": {
+            "address": {
+              "description": "Search contacts by any of the address fields. Max-length [100] Variants: <code>address_startswith</code> and <code>address_contains</code>",
+              "type": "string"
+            },
+            "company_name": {
+              "description": "Search contacts by company name. Max-length [100] Variants: <code>company_name_startswith</code> and <code>company_name_contains</code>",
+              "type": "string"
+            },
+            "contact_name": {
+              "description": "Search contacts by contact name. Max-length [100] Variants: <code>contact_name_startswith</code> and <code>contact_name_contains</code>. Max-length [100]",
+              "type": "string"
+            },
+            "contact_type": {
+              "description": "Search contacts by contact type. Allowed Values: <code>customer</code>, <code>vendor</code>.",
+              "type": "string"
+            },
+            "email": {
+              "description": "Search contacts by email of the primary contact person. Max-length [100] Variants: <code>email_startswith</code> and <code>email_contains</code>",
+              "type": "string"
+            },
+            "filter_by": {
+              "description": "Filter contacts by status. Allowed Values: <code>Status.All, Status.Active, Status.Inactive, Status.Duplicate, Status.PortalEnabled, Status.PortalDisabled, Invoice.OverDue, Invoice.Unpaid, Status.CreditLimitExceed and Status.Crm</code>",
+              "type": "string"
+            },
+            "first_name": {
+              "description": "Search contacts by first name of the primary contact person. Max-length [100] Variants: <code>first_name_startswith</code> and <code>first_name_contains</code>",
+              "type": "string"
+            },
+            "last_name": {
+              "description": "Search contacts by last name of the primary contact person. Max-length [100] Variants: <code>last_name_startswith</code> and <code>last_name_contains</code>",
+              "type": "string"
+            },
+            "organization_id": {
+              "description": "ID of the organization. Note: This value is a set of numeric characters.",
+              "type": "string"
+            },
+            "page": {
+              "default": 1,
+              "description": "Page number to be fetched. Default value is 1.",
+              "type": "integer"
+            },
+            "per_page": {
+              "default": 10,
+              "description": "Number of records to be fetched per page.",
+              "type": "integer"
+            },
+            "phone": {
+              "description": "Search contacts by phone number of the primary contact person. Max-length [100] Variants: <code>phone_startswith</code> and <code>phone_contains</code>",
+              "type": "string"
+            },
+            "search_text": {
+              "description": "Search contacts by contact name or notes. Max-length [100]",
+              "type": "string"
+            },
+            "sort_column": {
+              "description": "Sort contacts. Allowed Values: <code>contact_name, first_name, last_name, email, outstanding_receivable_amount, created_time and last_modified_time</code>",
+              "type": "string"
+            },
+            "zcrm_account_id": {
+              "description": "CRM Account ID for the contact. Note: This value is a set of numeric characters.",
+              "type": "string"
+            },
+            "zcrm_contact_id": {
+              "description": "CRM Contact ID for the contact. Note: This value is a set of numeric characters.",
+              "type": "string"
+            },
+            "zcrm_vendor_id": {
+              "description": "CRM Vendor ID for the contact. Note: This value is a set of numeric characters.",
               "type": "string"
             }
           },
@@ -1281,92 +1617,141 @@
     }
   },
   {
-    "name": "ZohoBooks_list_contacts",
-    "description": "Retrieve a comprehensive list of all contacts with advanced filters. This operation supports multiple search criteria including contact name, company name, address, email, phone, and general text search. You can filter contacts by status (active, inactive, duplicate, CRM) and sort by various fields. The response includes essential contact information, financial data including outstanding amounts and credit limits, and pagination details for efficient data retrieval.",
+    "name": "ZohoCRM_createRecords",
+    "description": "Create a Record in a specific module",
     "inputSchema": {
       "type": "object",
       "properties": {
-        "query_params": {
+        "body": {
+          "description": "The request body for Records Post",
           "properties": {
-            "address": {
-              "description": "Search contacts by any of the address fields. Max-length [100] Variants: <code>address_startswith</code> and <code>address_contains</code>",
-              "type": "string"
+            "apply_feature_execution": {
+              "description": "Specific features or behaviors that should be activated during the record processing operation.",
+              "items": {
+                "description": "Configuration settings for a feature that should be executed.",
+                "properties": {
+                  "name": {
+                    "description": "The API name of the feature to execute.",
+                    "enum": [
+                      "layout_rules",
+                      "range_validation",
+                      "assignment_rules",
+                      "function_validation_rule",
+                      "criteria_validation_rule",
+                      "global_map_dependency",
+                      "territory_subordinates"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": "array"
             },
-            "company_name": {
-              "description": "Search contacts by company name. Max-length [100] Variants: <code>company_name_startswith</code> and <code>company_name_contains</code>",
-              "type": "string"
+            "data": {
+              "description": "A collection of one or more records that will be created or modified in the system.",
+              "items": {
+                "description": "The structure representing a single record being sent to create a new record or update an existing one. Contains the field values and settings for the record operation.",
+                "properties": {
+                  "Layout": {
+                    "description": "The layout to use for this record, controlling which fields are visible and how they are arranged.",
+                    "properties": {
+                      "id": {
+                        "description": "The unique identifier of the layout.",
+                        "format": "int64",
+                        "maxLength": 19,
+                        "minLength": 1,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "type": "object"
+                  },
+                  "Wizard": {
+                    "description": "The wizard to use for this record, which provides a step-by-step guided data entry experience.",
+                    "properties": {
+                      "id": {
+                        "description": "The unique identifier of the wizard.",
+                        "format": "int64",
+                        "maxLength": 19,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
             },
-            "contact_name": {
-              "description": "Search contacts by contact name. Max-length [100] Variants: <code>contact_name_startswith</code> and <code>contact_name_contains</code>. Max-length [100]",
-              "type": "string"
+            "skip_feature_execution": {
+              "description": "Specific features or behaviors that should be bypassed or ignored during the record processing operation.",
+              "items": {
+                "description": "Configuration settings identifying a feature that should be skipped.",
+                "properties": {
+                  "name": {
+                    "description": "The API name of the feature to skip.",
+                    "enum": [
+                      "assignment_rules",
+                      "cadences",
+                      "connected_workflows"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": "array"
             },
-            "contact_type": {
-              "description": "Search contacts by contact type. Allowed Values: <code>customer</code>, <code>vendor</code>.",
-              "type": "string"
-            },
-            "email": {
-              "description": "Search contacts by email of the primary contact person. Max-length [100] Variants: <code>email_startswith</code> and <code>email_contains</code>",
-              "type": "string"
-            },
-            "filter_by": {
-              "description": "Filter contacts by status. Allowed Values: <code>Status.All, Status.Active, Status.Inactive, Status.Duplicate, Status.PortalEnabled, Status.PortalDisabled, Invoice.OverDue, Invoice.Unpaid, Status.CreditLimitExceed and Status.Crm</code>",
-              "type": "string"
-            },
-            "first_name": {
-              "description": "Search contacts by first name of the primary contact person. Max-length [100] Variants: <code>first_name_startswith</code> and <code>first_name_contains</code>",
-              "type": "string"
-            },
-            "last_name": {
-              "description": "Search contacts by last name of the primary contact person. Max-length [100] Variants: <code>last_name_startswith</code> and <code>last_name_contains</code>",
-              "type": "string"
-            },
-            "organization_id": {
-              "description": "ID of the organization. Note: This value is a set of numeric characters.",
-              "type": "string"
-            },
-            "page": {
-              "default": 1,
-              "description": "Page number to be fetched. Default value is 1.",
-              "type": "integer"
-            },
-            "per_page": {
-              "default": 10,
-              "description": "Number of records to be fetched per page.",
-              "type": "integer"
-            },
-            "phone": {
-              "description": "Search contacts by phone number of the primary contact person. Max-length [100] Variants: <code>phone_startswith</code> and <code>phone_contains</code>",
-              "type": "string"
-            },
-            "search_text": {
-              "description": "Search contacts by contact name or notes. Max-length [100]",
-              "type": "string"
-            },
-            "sort_column": {
-              "description": "Sort contacts. Allowed Values: <code>contact_name, first_name, last_name, email, outstanding_receivable_amount, created_time and last_modified_time</code>",
-              "type": "string"
-            },
-            "zcrm_account_id": {
-              "description": "CRM Account ID for the contact. Note: This value is a set of numeric characters.",
-              "type": "string"
-            },
-            "zcrm_contact_id": {
-              "description": "CRM Contact ID for the contact. Note: This value is a set of numeric characters.",
-              "type": "string"
-            },
-            "zcrm_vendor_id": {
-              "description": "CRM Vendor ID for the contact. Note: This value is a set of numeric characters.",
+            "trigger": {
+              "description": "Automated workflows or processes that should be activated when the record operation completes.",
+              "items": {
+                "description": "The category of automation workflow to activate.",
+                "enum": [
+                  "approval",
+                  "workflow",
+                  "blueprint",
+                  "pathfinder",
+                  "orchestration"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "data"
+          ],
+          "type": "object"
+        },
+        "path_variables": {
+          "properties": {
+            "module": {
+              "description": "The API name of the module to perform the operation on. System-defined modules include Leads, Accounts, Contacts, Deals, Campaigns, Tasks, Cases, Meetings, Calls, Solutions, Products, Vendors, Price_Books, Quotes, Sales_Orders, Purchase_Orders, Invoices, Appointments, Appointments_Rescheduled_History, and Services. Custom modules created in your CRM organization are also supported. Use the module's API name (e.g., Leads, Price_Books).",
+              "maxLength": 25,
               "type": "string"
             }
           },
           "required": [
-            "organization_id"
+            "module"
           ],
           "type": "object"
         }
       },
       "required": [
-        "query_params"
+        "body",
+        "path_variables"
       ]
     }
   }
