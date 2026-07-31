@@ -36,6 +36,7 @@ import zoho_mcp.digest      as digest
 import zoho_mcp.learning    as learning
 import zoho_mcp.lead_capture as lead_capture
 import zoho_mcp.deal_sync     as deal_sync
+import zoho_mcp.account_360   as account_360
 
 logging.basicConfig(
     level=logging.INFO,
@@ -542,17 +543,33 @@ async def query_endpoint(request: Request, body: QueryRequest):
                         route         = "unknown"
                         source_chunks = 0
                     else:
-                        zoho_answer = await zoho_agent.run(
-                            rewritten, history_dicts, identity
-                        )
-                        if zoho_answer:
-                            english_response = zoho_answer
-                            route            = "zoho"
-                            source_chunks    = 0
+                        # ── Phase D: Account 360 for staff ───────────────────
+                        if (identity.state == "internal"
+                                and account_360.is_360_request(rewritten)):
+                            acct = await account_360.extract_account_name(rewritten)
+                            if acct:
+                                english_response = await account_360.get_summary(acct)
+                                route            = "account_360"
+                                source_chunks    = 0
+                            else:
+                                english_response = (
+                                    "I couldn't identify which account you meant. "
+                                    "Try: 'Account 360 for King Sample'"
+                                )
+                                route         = "escalate"
+                                source_chunks = 0
                         else:
-                            english_response = ESCALATION_HOLDING_MESSAGE
-                            route            = "escalate"
-                            source_chunks    = 0
+                            zoho_answer = await zoho_agent.run(
+                                rewritten, history_dicts, identity
+                            )
+                            if zoho_answer:
+                                english_response = zoho_answer
+                                route            = "zoho"
+                                source_chunks    = 0
+                            else:
+                                english_response = ESCALATION_HOLDING_MESSAGE
+                                route            = "escalate"
+                                source_chunks    = 0
 
                 elif intent == "general":
                     english_response = general_llm_answer(english_message, body.history)

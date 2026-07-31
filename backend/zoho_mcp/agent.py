@@ -117,6 +117,12 @@ call any tool. Examples of messages that must NOT trigger any tool call:
 
   "Create an invoice for Nile Trading for $5000."
       → no tool. Write operation; no write tool in this tool list.
+      
+  "What is the current USD to INR exchange rate?"
+      → no tool (external market data, not in Zoho)
+      
+  "My new address is 42 Marine Lines, Mumbai."
+      → no tool (this is a contact update request, not a data lookup)
 
 The rule: if you cannot identify a specific Zoho module and a specific record
 or filter to retrieve, do not call any tool.

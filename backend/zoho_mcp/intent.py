@@ -38,7 +38,11 @@ Value must be exactly one of:
 
   write_zoho     — request to CREATE or UPDATE a Zoho record:
                    "I need a quote for...", "place an order for...",
-                   "create an enquiry for...", "I want to order...".
+                   "create an enquiry for...", "send me an estimate for...",
+                   "I want to order...",
+                   "update my email to...", "change my phone number to...",
+                   "my new address is...", "update my contact details...",
+                   "mark lead X as qualified", "close deal as won".
 
   ops_query      — question about the SYSTEM'S OWN OPERATIONAL ACTIVITY:
                    "how many quotes today?", "what's pending approval?",

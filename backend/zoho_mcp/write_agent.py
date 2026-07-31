@@ -140,15 +140,22 @@ SALES ORDER RULES (ZohoBooks_create_sales_order):
   
 CRM UPDATE RULES (ZohoCRM_updateRecord):
   - path_variables.module: Leads | Contacts | Deals | Accounts
-  - path_variables.id: use "record_id" as placeholder
+  - path_variables.recordId: use "record_id" as placeholder
   - body.data: ONE object with:
       "_search_name": name to search for (resolves to record ID)
       + the fields to update
   - Lead_Status values: "New" | "Contacted" | "Qualified" |
     "Lost Lead" | "Not Contacted" | "Pre-Qualified"
-  - Example: {{"path_variables": {{"module": "Leads", "id": "record_id"}},
+  - Example: {{"path_variables": {{"module": "Leads", "recordId": "record_id"}},
                "body": {{"data": [{{"_search_name": "Rajesh Kumar",
                                   "Lead_Status": "Qualified"}}]}}}}
+
+CUSTOMER SELF-SERVICE CONTACT UPDATE:
+  If the user says "update MY email", "MY phone", "MY address" — they are
+  updating THEIR OWN contact. Use module=Contacts and "contact_id" as
+  the recordId placeholder. Do NOT include _search_name.
+  Example: {{"path_variables": {{"module": "Contacts", "recordId": "contact_id"}},
+             "body": {{"data": [{{"Email": "rajesh@sunrisefoods.com"}}]}}}}
 
 CRM LEAD RULES (ZohoCRM_createRecords):
   - path_variables.module must be "Leads".
@@ -243,7 +250,7 @@ async def generate_proposal(
         )
         return None
     
-    # Phase B: resolve CRM record ID before generating proposal
+    # Phase B/D: resolve CRM record ID before generating proposal
     if tool_name == "ZohoCRM_updateRecord":
         import copy
         tool_args = copy.deepcopy(tool_args)
@@ -251,15 +258,24 @@ async def generate_proposal(
         module    = pv.get("module", "Leads")
         data      = tool_args.get("body", {}).get("data", [{}])
         fields    = data[0] if data else {}
-        search_name = fields.pop("_search_name", "")
-        if not search_name:
-            log.warning("[write_agent] updateRecord missing _search_name")
-            return None
-        record_id = await _resolve_crm_record_id(module, search_name)
-        if not record_id:
-            log.warning("[write_agent] could not find %s '%s'", module, search_name)
-            return None
-        pv["recordId"] = record_id
+
+        # Phase D: customer self-service — inject known contact_id directly
+        if module == "Contacts" and identity.state == "known" and identity.contact_id:
+            fields.pop("_search_name", None)   # remove search field if present
+            pv["recordId"] = identity.contact_id
+            log.info("[write_agent] customer self-update: contact_id=%s",
+                     identity.contact_id)
+        else:
+            # Staff update — resolve record ID via CRM search
+            search_name = fields.pop("_search_name", "")
+            if not search_name:
+                log.warning("[write_agent] updateRecord missing _search_name")
+                return None
+            record_id = await _resolve_crm_record_id(module, search_name)
+            if not record_id:
+                log.warning("[write_agent] could not find %s '%s'", module, search_name)
+                return None
+            pv["recordId"] = record_id
 
     log.info("[write_agent] proposal: tool=%s risk=%s", tool_name, risk)
     return tool_name, proposal_text, tool_args, risk
@@ -319,9 +335,14 @@ async def execute_write(
       - Plain-text Zoho auth error ("Connection not authorised")
       - JSON Zoho API error (code != 0)
     """
-    if not ZOHO_WRITE_MCP_URL:
-        log.error("[write_agent] ZOHO_WRITE_MCP_URL not set")
-        return None
+    _CRM_TOOLS = {"ZohoCRM_createRecords", "ZohoCRM_updateRecord"}
+    if tool_name in _CRM_TOOLS:
+        server_url = None          # read server — admin CRM auth
+    else:
+        if not ZOHO_WRITE_MCP_URL:
+            log.error("[write_agent] ZOHO_WRITE_MCP_URL not set")
+            return None
+        server_url = ZOHO_WRITE_MCP_URL
 
     # Inject organization_id placeholder
     if ZOHO_ORG_ID:
@@ -334,7 +355,7 @@ async def execute_write(
     log.info("[write_agent] executing %s | args: %s", tool_name, str(tool_args)[:300])
 
     try:
-        async with ZohoMCPClient(url=ZOHO_WRITE_MCP_URL) as zoho:
+        async with ZohoMCPClient(url=server_url) as zoho:
             result = await zoho.call_tool(tool_name, tool_args)
         result_text = result_to_text(result)
         log.info("[write_agent] result (first 300): %s", result_text[:300])
