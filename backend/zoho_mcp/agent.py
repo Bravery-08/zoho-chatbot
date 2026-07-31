@@ -149,7 +149,7 @@ _tool_cache_ts: float      = 0.0
 # Tools that are internal-only and must never appear in the routing agent's schema.
 # ZohoBooks_list_contacts is called directly by identity.py for customer_id lookup —
 # it must not be selectable by the LLM for user queries.
-_AGENT_EXCLUDED_TOOLS: frozenset[str] = frozenset({"ZohoBooks_list_contacts","ZohoCRM_createRecords"})
+_AGENT_EXCLUDED_TOOLS: frozenset[str] = frozenset({"ZohoBooks_list_contacts","ZohoCRM_createRecords","ZohoCRM_updateRecord",})
 
 
 async def _get_tools() -> list[dict]:

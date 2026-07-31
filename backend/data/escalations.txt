@@ -48,3 +48,17 @@ A: APPROVE <ebc42d78-d498-4d4e-b6de-373e14cb3d3f>
 Date: 2026-06-27T05:40:45.468998
 Q: how many quotes today?
 A: 5
+
+---
+Date: 2026-07-31T08:33:21.583658
+Q: ⚠️ APPROVAL NEEDED
+
+Customer: Sample Acc (King (Sample))
+
+Proposed action:
+I'll convert QT-000001 into a confirmed sales order. This commits the order — shall I proceed?
+
+Reply:
+  APPROVE f06498f42d12
+  REJECT f06498f42d12
+A: APPROVE <action_id>

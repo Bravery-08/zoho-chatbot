@@ -259,7 +259,7 @@ async def generate_proposal(
         if not record_id:
             log.warning("[write_agent] could not find %s '%s'", module, search_name)
             return None
-        pv["id"] = record_id
+        pv["recordId"] = record_id
 
     log.info("[write_agent] proposal: tool=%s risk=%s", tool_name, risk)
     return tool_name, proposal_text, tool_args, risk

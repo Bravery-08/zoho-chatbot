@@ -1754,5 +1754,148 @@
         "path_variables"
       ]
     }
+  },
+  {
+    "name": "ZohoCRM_updateRecord",
+    "description": "To update existing entities or records in a specified module with the recordID",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "description": "Request body containing the updated resource data to modify the existing record.",
+          "properties": {
+            "apply_feature_execution": {
+              "description": "Specific features or behaviors that should be activated during the record processing operation.",
+              "items": {
+                "description": "Configuration settings for a feature that should be executed.",
+                "properties": {
+                  "name": {
+                    "description": "The API name of the feature to execute.",
+                    "enum": [
+                      "layout_rules",
+                      "range_validation",
+                      "assignment_rules",
+                      "function_validation_rule",
+                      "criteria_validation_rule",
+                      "global_map_dependency",
+                      "territory_subordinates"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "data": {
+              "description": "A collection of one or more records to be updated. Each record must include an id field to identify the record.",
+              "items": {
+                "description": "The structure representing a single record being sent to update an existing one. The id field is required to identify which record to update.",
+                "properties": {
+                  "$append_values": {
+                    "description": "Determines whether values in multi-select dropdown fields should be added to existing values (append) or replace them completely during an update. Think of it like adding items to a shopping list versus replacing the entire list.",
+                    "maxLength": 10,
+                    "type": "string"
+                  },
+                  "Layout": {
+                    "description": "The layout to use for this record, controlling which fields are visible and how they are arranged.",
+                    "properties": {
+                      "id": {
+                        "description": "The unique identifier of the layout.",
+                        "format": "int64",
+                        "maxLength": 19,
+                        "minLength": 1,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "type": "object"
+                  },
+                  "id": {
+                    "description": "The unique identifier of the record to update. This field is required for PUT operations to identify which record should be modified.",
+                    "format": "int64",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "skip_feature_execution": {
+              "description": "Specific features or behaviors that should be bypassed or ignored during the record processing operation.",
+              "items": {
+                "description": "Configuration settings identifying a feature that should be skipped.",
+                "properties": {
+                  "name": {
+                    "description": "The API name of the feature to skip.",
+                    "enum": [
+                      "assignment_rules",
+                      "cadences",
+                      "connected_workflows"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "trigger": {
+              "description": "Automated workflows or processes that should be activated when the record operation completes.",
+              "items": {
+                "description": "The category of automation workflow to activate.",
+                "enum": [
+                  "approval",
+                  "workflow",
+                  "blueprint",
+                  "pathfinder",
+                  "orchestration"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "data"
+          ],
+          "type": "object"
+        },
+        "path_variables": {
+          "properties": {
+            "module": {
+              "description": "The API name of the module to perform the operation on. System-defined modules include Leads, Accounts, Contacts, Deals, Campaigns, Tasks, Cases, Meetings, Calls, Solutions, Products, Vendors, Price_Books, Quotes, Sales_Orders, Purchase_Orders, Invoices, Appointments, Appointments_Rescheduled_History, and Services. Custom modules created in your CRM organization are also supported. Use the module's API name (e.g., Leads, Price_Books).",
+              "maxLength": 25,
+              "type": "string"
+            },
+            "recordId": {
+              "description": "This ID is used to uniquely identify a record",
+              "format": "int64",
+              "type": "string"
+            }
+          },
+          "required": [
+            "module",
+            "recordId"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "body",
+        "path_variables"
+      ]
+    }
   }
 ]

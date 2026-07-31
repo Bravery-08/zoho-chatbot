@@ -35,6 +35,7 @@ import zoho_mcp.ops         as ops
 import zoho_mcp.digest      as digest
 import zoho_mcp.learning    as learning
 import zoho_mcp.lead_capture as lead_capture
+import zoho_mcp.deal_sync     as deal_sync
 
 logging.basicConfig(
     level=logging.INFO,
@@ -327,14 +328,27 @@ async def query_endpoint(request: Request, body: QueryRequest):
                                 result_text=result_text,
                                 tool_args=pending.tool_args,
                             )
+                            if wf:
+                                log.info("  [workflow] quote_to_order started id=%s", wf.id)
+                                # ── Phase C: create linked CRM Deal ───────────
+                                deal_id = await deal_sync.create_from_estimate(
+                                    account_name=identity.account_name or "",
+                                    result_text=result_text,
+                                )
+                                if deal_id:
+                                    workflow.advance(
+                                        wf.id,
+                                        workflow.ESTIMATE_CREATED,
+                                        {"crm_deal_id": deal_id},
+                                    )
+                                    log.info("[deal_sync] Deal=%s linked to workflow=%s",
+                                             deal_id, wf.id)
                             english_response = (
                                 "Done! Your estimate has been created. "
                                 "When you're ready to place the order, "
                                 "just say *accept* or *place order*."
                                 if wf else "Done! I've created that for you."
                             )
-                            if wf:
-                                log.info("  [workflow] quote_to_order started id=%s", wf.id)
                         else:
                             english_response = "Done! I've created that for you."
                         route         = "zoho_write"
@@ -349,6 +363,11 @@ async def query_endpoint(request: Request, body: QueryRequest):
                         log.warning("[learning] ADD TO CORPUS: %s", corpus_entry)
                         wf = workflow.get_active(body.sender)
                         if wf:
+                            # ── Phase C: mark CRM Deal as Closed Lost ─────────
+                            deal_id = wf.context.get("crm_deal_id")
+                            if deal_id:
+                                await deal_sync.advance_stage(deal_id, deal_sync.DEAL_STAGE_LOST)
+                                log.info("[deal_sync] Deal=%s → Closed Lost (retry failure)", deal_id)
                             workflow.fail(wf.id, f"{pending.tool_name} failed after retries")
                         english_response = ESCALATION_HOLDING_MESSAGE
                         route            = "escalate"
@@ -476,7 +495,7 @@ async def query_endpoint(request: Request, body: QueryRequest):
                 route             = "lead_capture"
                 source_chunks     = 0
 
-            else:
+            elif not wf_handled:
                 # ── Step 6: Classify intent ───────────────────────────────────
                 intent = intent_classifier.classify(rewritten, history_dicts)
                 log.info(f"  [intent] {intent}")
@@ -711,6 +730,11 @@ async def escalate_resolve(body: EscalationResolveRequest):
                 except Exception:
                     so_id = ""
                 workflow.complete(wf.id, {"salesorder_id": so_id})
+                # ── Phase C: mark CRM Deal as Closed Won ──────────────
+                deal_id = wf.context.get("crm_deal_id")
+                if deal_id:
+                    await deal_sync.advance_stage(deal_id, deal_sync.DEAL_STAGE_WON)
+                    log.info("[deal_sync] Deal=%s → Closed Won", deal_id)
 
             customer_answer = "Great news — your request has been approved and processed!"
         else:
