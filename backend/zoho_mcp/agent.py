@@ -284,9 +284,10 @@ def _is_grounded(result_text: str) -> bool:
 # ── Main entry point ──────────────────────────────────────────────────────────
 
 async def run(
-    message:  str,
-    history:  list[dict],
-    identity: Optional[CustomerIdentity] = None,
+    message:          str,
+    history:          list[dict],
+    identity:         Optional[CustomerIdentity] = None,
+    customer_context: Optional[str]              = None,
 ) -> Optional[str]:
     """
     Run the Zoho agent loop for one user message.
@@ -323,8 +324,15 @@ async def run(
 
     # ── Step 2: LLM picks a tool ──────────────────────────────────────────────
     recent   = history[-6:] if len(history) > 6 else history
-    # In the messages list inside run():
     messages = [{"role": "system", "content": _get_routing_prompt()}]
+    # ── Phase F: inject customer context if available ─────────────────────────
+    if customer_context:
+        ctx_msg = (
+            "CUSTOMER CONTEXT — use this to give more relevant answers "
+            "and proactively reference open business when appropriate:\n"
+            + customer_context
+        )
+        messages.append({"role": "system", "content": ctx_msg})
     messages.extend(recent)
     messages.append({"role": "user", "content": message})
 

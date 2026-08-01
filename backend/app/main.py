@@ -38,6 +38,7 @@ import zoho_mcp.lead_capture as lead_capture
 import zoho_mcp.deal_sync     as deal_sync
 import zoho_mcp.account_360   as account_360
 import zoho_mcp.tasks         as crm_tasks
+import zoho_mcp.crm_intelligence as crm_intel
 
 logging.basicConfig(
     level=logging.INFO,
@@ -106,6 +107,9 @@ async def _digest_scheduler() -> None:
                 tasks_text = await crm_tasks.get_due_today_text()
                 if tasks_text:
                     text = text + tasks_text
+                intel_text = await crm_intel.get_intelligence_digest_section()
+                if intel_text:
+                    text = text + intel_text
                 for phone in _STAFF_PHONES:
                     jid = f"{phone}@s.whatsapp.net"
                     mid = digest.schedule_to_outbox(jid, text)
@@ -501,6 +505,17 @@ async def query_endpoint(request: Request, body: QueryRequest):
                 source_chunks     = 0
 
             elif not wf_handled:
+                # ── Phase F: customer context enrichment ─────────────────────
+                _customer_ctx: str | None = None
+                if identity.state == "known" and identity.account_name:
+                    try:
+                        _customer_ctx = await crm_intel.get_customer_context(
+                            identity.account_name
+                        )
+                    except Exception as _ctx_exc:
+                        log.debug("[crm_intel] context fetch failed: %s",
+                                  _ctx_exc)
+
                 # ── Step 6: Classify intent ───────────────────────────────────
                 intent = intent_classifier.classify(rewritten, history_dicts)
                 log.info(f"  [intent] {intent}")
@@ -564,7 +579,8 @@ async def query_endpoint(request: Request, body: QueryRequest):
                                 source_chunks = 0
                         else:
                             zoho_answer = await zoho_agent.run(
-                                rewritten, history_dicts, identity
+                                rewritten, history_dicts, identity,
+                                customer_context=_customer_ctx,
                             )
                             if zoho_answer:
                                 english_response = zoho_answer
@@ -839,6 +855,9 @@ async def trigger_digest_now():
     tasks_text = await crm_tasks.get_due_today_text()
     if tasks_text:
         text = text + tasks_text
+    intel_text = await crm_intel.get_intelligence_digest_section()
+    if intel_text:
+        text = text + intel_text
     outbox_ids = []
     for phone in _STAFF_PHONES:
         jid = f"{phone}@s.whatsapp.net"
