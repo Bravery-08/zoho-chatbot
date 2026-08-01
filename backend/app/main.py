@@ -37,6 +37,7 @@ import zoho_mcp.learning    as learning
 import zoho_mcp.lead_capture as lead_capture
 import zoho_mcp.deal_sync     as deal_sync
 import zoho_mcp.account_360   as account_360
+import zoho_mcp.tasks         as crm_tasks
 
 logging.basicConfig(
     level=logging.INFO,
@@ -101,7 +102,10 @@ async def _digest_scheduler() -> None:
             if now.hour == digest_hour and day_key not in _sent_today:
                 log.info("[digest] triggering daily digest for %d staff JIDs",
                          len(_STAFF_PHONES))
-                text = digest.generate_digest_text()
+                text       = digest.generate_digest_text()
+                tasks_text = await crm_tasks.get_due_today_text()
+                if tasks_text:
+                    text = text + tasks_text
                 for phone in _STAFF_PHONES:
                     jid = f"{phone}@s.whatsapp.net"
                     mid = digest.schedule_to_outbox(jid, text)
@@ -831,7 +835,10 @@ async def trigger_digest_now():
     and for on-demand visibility into current pipeline state.
     """
     from zoho_mcp.identity import _STAFF_PHONES
-    text = digest.generate_digest_text()
+    text       = digest.generate_digest_text()
+    tasks_text = await crm_tasks.get_due_today_text()
+    if tasks_text:
+        text = text + tasks_text
     outbox_ids = []
     for phone in _STAFF_PHONES:
         jid = f"{phone}@s.whatsapp.net"

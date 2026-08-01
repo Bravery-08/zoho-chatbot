@@ -34,7 +34,9 @@ Value must be exactly one of:
 
   read_zoho      — question requiring live Zoho record lookup:
                    order/invoice/shipment status, customer balance, stock levels,
-                   lead/deal/contact lookup, purchase orders, estimates by customer.
+                   lead/deal/contact lookups, purchase orders, estimates,
+                   CRM tasks due today, overdue follow-ups, call logs,
+                   meeting notes, activity history.
 
   write_zoho     — request to CREATE or UPDATE a Zoho record:
                    "I need a quote for...", "place an order for...",
@@ -42,15 +44,18 @@ Value must be exactly one of:
                    "I want to order...",
                    "update my email to...", "change my phone number to...",
                    "my new address is...", "update my contact details...",
-                   "mark lead X as qualified", "close deal as won".
+                   "mark lead X as qualified", "close deal as won",
+                   "log a call with...", "log that I called...",
+                   "create a meeting note...", "log a meeting with...",
+                   "remind me to follow up...", "create a task to...",
+                   "set a reminder for...".
 
   ops_query      — question about the SYSTEM'S OWN OPERATIONAL ACTIVITY:
                    "how many quotes today?", "what's pending approval?",
                    "any workflow failures?", "what did we do this week?",
-                   "conversion rate?", "any alerts?", "pipeline summary",
-                   "show today's activity", "how many orders this month?".
-                   These are aggregate metrics about the company's pipeline,
-                   NOT lookups of individual Zoho records.
+                   "conversion rate?", "any alerts?", "pipeline summary".
+                   These are aggregate pipeline metrics from local data.
+                   NOT CRM tasks, activities, or follow-ups — those are read_zoho.
 
   general        — off-topic, greetings, thanks, weather, exchange rates,
                    calculations, translations, or unrelated to business data.

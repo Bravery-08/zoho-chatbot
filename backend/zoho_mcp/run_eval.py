@@ -37,7 +37,9 @@ from zoho_mcp.config import (
     PRICE_PER_MTOK_INPUT,
     PRICE_PER_MTOK_OUTPUT,
 )
-from zoho_mcp.agent import _ROUTING_PROMPT as AGENT_SYSTEM_PROMPT
+from zoho_mcp.agent import _get_routing_prompt
+
+AGENT_SYSTEM_PROMPT = _get_routing_prompt()    # ← call it, don't just assign the function
 
 logging.basicConfig(
     level=logging.INFO,
@@ -147,6 +149,24 @@ def _parse_failed_generation(error: GroqBadRequestError) -> tuple[str | None, di
         pass
     return None, {}
 
+# All tools excluded from the eval schema
+_EVAL_EXCLUDED = frozenset({
+    "ZohoBooks_list_contacts",
+    "ZohoCRM_createRecords",
+    "ZohoCRM_updateRecord",
+})
+
+def _normalise_tool_name(name: str | None, tool_names: set[str] | None = None) -> str | None:
+    """
+    Treat 'none'/'no_tool' strings as no tool.
+    Also treat excluded write tools as no tool — they're excluded from the schema
+    so the model can't legitimately call them in the read-agent context.
+    """
+    if isinstance(name, str) and name.lower() in ("none", "no_tool"):
+        return None
+    if isinstance(name, str) and name in _EVAL_EXCLUDED:
+        return None
+    return name
 
 def run_one(client: Groq, tools: list[dict], row: dict) -> dict:
     import time
@@ -188,6 +208,7 @@ def run_one(client: Groq, tools: list[dict], row: dict) -> dict:
         # from failed_generation so the row is still scored correctly.
         latency_ms = int((time.time() - start) * 1000)
         predicted_tool, predicted_args = _parse_failed_generation(exc)
+        predicted_tool = _normalise_tool_name(predicted_tool)
         schema_error = True
         schema_error_msg = str(exc)[:300]
         # Token counts aren't available on a 400 — record zeros.

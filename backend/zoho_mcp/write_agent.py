@@ -164,6 +164,42 @@ CRM LEAD RULES (ZohoCRM_createRecords):
 
 {books_note}
 
+ACTIVITY LOG RULES (ZohoCRM_createRecords — module="Calls" or "Events"):
+  Use module="Calls" for phone calls, module="Events" for meetings/visits.
+  Calls required fields:
+    Subject: short description ("Call with Rajesh — Q3 pricing")
+    Call_Type: "Outbound" or "Inbound"
+    Call_Status: "Completed"
+    Outgoing_Call_Status: "Completed"
+    Call_Start_Time: current datetime in ISO format ("2026-07-31T10:30:00+05:30")
+    Call_Duration: call duration in seconds as string (use "300" if unknown)
+    Description: detailed notes
+  Events required fields:
+    Subject: meeting title
+    Description: meeting notes or agenda
+  Example (call): {{"path_variables": {{"module": "Calls"}},
+    "body": {{"data": [{{
+      "Subject": "Call with Rajesh — Q3 pricing",
+      "Call_Type": "Outbound",
+      "Call_Status": "Completed",
+      "Outgoing_Call_Status": "Completed",
+      "Call_Start_Time": "2026-07-31T10:30:00+05:30",
+      "Call_Duration": "300",
+      "Description": "Discussed basmati pricing for Q3 2026"}}]}}}}
+
+TASK CREATION RULES (ZohoCRM_createRecords — module="Tasks"):
+  Use when user asks for a reminder, to-do, or follow-up task.
+  Required fields:
+    Subject: what needs to be done
+    Status: "Not Started"
+    Due_Date: YYYY-MM-DD — parse from message ("Friday"=nearest Friday,
+              "next week"=+7 days, specific dates as stated)
+    Description: extra notes if any
+  Example: {{"path_variables": {{"module": "Tasks"}},
+    "body": {{"data": [{{"Subject": "Follow up with Sunrise Foods",
+      "Status": "Not Started", "Due_Date": "2026-08-08",
+      "Description": "Follow up on Q3 pricing"}}]}}}}
+
 proposal_text must be 1-2 friendly sentences summarising what will happen.
 If no write tool fits, output: {{"tool_name": null, "tool_args": {{}}, "proposal_text": ""}}
 Output ONLY valid JSON. No markdown, no explanation.
@@ -376,15 +412,24 @@ async def execute_write(
         log.error("[write_agent] Zoho auth/permission error: %s", result_text[:200])
         return None
 
-    # ── JSON Zoho API errors (code != 0) ─────────────────────────────────────
+    # ── JSON Zoho API errors ──────────────────────────────────────────────────
     try:
         data = json.loads(result_text)
+        # Top-level error (Books pattern)
         if isinstance(data, dict) and data.get("code", 0) != 0:
             log.error("[write_agent] Zoho error: code=%s msg=%s",
                       data.get("code"), data.get("message"))
             return None
+        # Nested data[] error (CRM pattern — each record has its own code)
+        records = data.get("data", []) if isinstance(data, dict) else []
+        if records and all(r.get("code") not in ("SUCCESS", None) for r in records):
+            first = records[0]
+            log.error("[write_agent] Zoho CRM error: code=%s msg=%s details=%s",
+                      first.get("code"), first.get("message"),
+                      first.get("details", ""))
+            return None
     except json.JSONDecodeError:
-        pass   # non-JSON non-error response — treat as success
+        pass
 
     return result_text
 

@@ -24,8 +24,7 @@ import zoho_mcp.scope as scope
 
 log = logging.getLogger(__name__)
 
-# ── Tool-selection routing rules ──────────────────────────────────────────────
-_ROUTING_PROMPT = """
+_ROUTING_PROMPT_TEMPLATE="""
 You are an operations agent for a B2B merchant-export company.
 You have access ONLY to the Zoho business data tools provided — no search
 engines, calculators, or any other tools. Never call a tool not in the list.
@@ -86,11 +85,22 @@ ROUTING RULES — apply when two tools could both fit:
    send estimate, delete lead, make payment, raise a PO) and no write tool
    appears in the tool list provided, do not call any tool. Do not call a read
    tool as a substitute for a write operation.
+   This includes activity and task creation:
+     "Log a call with Rajesh..."         → no tool (write operation)
+     "Remind me to follow up with..."    → no tool (write operation)
+     "Create a meeting note for..."      → no tool (write operation)
 
 9. CONVERSATIONAL MESSAGES:
    Do not call any tool for messages with no data query intent:
    greetings, acknowledgements, filler — "okay", "got it", "thanks", "bye",
    "I understand", "sounds good", "noted", "great". These are not Zoho queries.
+   
+10. CRM TASKS DATE SEARCH: when filtering Tasks by date, always use the field
+    name "Due_Date" (underscore, not space). Never use today() — substitute
+    the actual date in YYYY-MM-DD format.
+    Today's date is {today}.
+    Correct:   (Due_Date:equals:2026-07-31)
+    Incorrect: (Due Date:equals:today())
 
 Do not invent IDs or values not present in the message.
 Use "organization_id" as a placeholder for the org ID — it is replaced
@@ -121,17 +131,22 @@ call any tool. Examples of messages that must NOT trigger any tool call:
   "What is the current USD to INR exchange rate?"
       → no tool (external market data, not in Zoho)
       
-  "My new address is 42 Marine Lines, Mumbai."
-      → no tool (this is a contact update request, not a data lookup)
+  "Explain the difference between CIF and FOB pricing."
+      → no tool. Trade term explanation, not a Zoho data query.
 
 The rule: if you cannot identify a specific Zoho module and a specific record
 or filter to retrieve, do not call any tool.
 
 CRITICAL — SCHEMA STRUCTURE: Every Zoho tool wraps its parameters under
 query_params and/or path_variables. Never generate flat top-level args.
-CORRECT:   {"query_params": {"organization_id": "organization_id", "filter_by": "Status.Unpaid"}}
-INCORRECT: {"organization_id": "organization_id", "filter_by": "Status.Unpaid"}
+CORRECT:   {{"query_params": {{"organization_id": "organization_id", "filter_by": "Status.Unpaid"}}}}
+INCORRECT: {{"organization_id": "organization_id", "filter_by": "Status.Unpaid"}}
 """.strip()
+
+def _get_routing_prompt() -> str:
+    from datetime import date
+    today = date.today().isoformat()
+    return _ROUTING_PROMPT_TEMPLATE.replace("{today}", today)
 
 # ── Synthesizer prompt ────────────────────────────────────────────────────────
 _SYNTHESIZER_PROMPT = """
@@ -308,7 +323,8 @@ async def run(
 
     # ── Step 2: LLM picks a tool ──────────────────────────────────────────────
     recent   = history[-6:] if len(history) > 6 else history
-    messages = [{"role": "system", "content": _ROUTING_PROMPT}]
+    # In the messages list inside run():
+    messages = [{"role": "system", "content": _get_routing_prompt()}]
     messages.extend(recent)
     messages.append({"role": "user", "content": message})
 

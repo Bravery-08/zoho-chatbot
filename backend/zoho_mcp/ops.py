@@ -209,3 +209,16 @@ def get_alerts() -> list[str]:
         alerts.append(f"⚠️ Alert check failed: {exc}")
 
     return alerts
+
+async def get_task_alerts() -> list[str]:
+    """
+    Fetch overdue CRM Tasks to include in alerts.
+    Async because it queries Zoho CRM via the read server.
+    Called from the digest scheduler in main.py (async context).
+    """
+    try:
+        from zoho_mcp.tasks import get_overdue_alerts
+        return await get_overdue_alerts()
+    except Exception as exc:
+        log.error("[ops] task alerts failed: %s", exc)
+        return []
